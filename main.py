@@ -50,7 +50,7 @@ def mostrar_login():
     
     st.markdown("""
     <div style="text-align: center; margin-top: 50px; padding: 20px; 
-                background-color: #f0f2f6; border-radius: 10px;">
+                background-color: #951530; border-radius: 10px;">
         <h4>ℹ️ Información importante</h4>
         <p>• Solo las cuentas autorizadas pueden acceder al sistema</p>
         <p>• Contacta al administrador si necesitas acceso</p>
