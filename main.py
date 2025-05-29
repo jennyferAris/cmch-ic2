@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_oauth import OAuth2Component
 from streamlit_option_menu import option_menu
-from generar_qr import generar_qrs  # Importa la función para generar QR
+from generar_qr import generar_qrs  # Asegúrate de que esta función esté bien definida
 import json
 
 # Leer configuración desde secrets.toml
@@ -36,7 +36,10 @@ roles_autorizados = json.loads(st.secrets["roles_autorizados"]["data"])
 # MAIN
 def main():
     st.set_page_config(page_title="CMCH App", layout="wide")
-    st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Cayetano_Heredia_University_logo.png/800px-Cayetano_Heredia_University_logo.png", width=180)
+    st.sidebar.image(
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Cayetano_Heredia_University_logo.png/800px-Cayetano_Heredia_University_logo.png",
+        width=180,
+    )
 
     user_info = obtener_info_usuario()
 
@@ -54,9 +57,17 @@ def main():
 
     menu = option_menu(
         menu_title="Menú Principal",
-        options=["Inicio", "Ver Base de Datos", "Asignación de Tareas", "Gestión de Usuarios", "Generar QR", "Perfil", "Configuración"],
+        options=[
+            "Inicio",
+            "Ver Base de Datos",
+            "Asignación de Tareas",
+            "Gestión de Usuarios",
+            "Generar QR",
+            "Perfil",
+            "Configuración",
+        ],
         icons=["house", "database", "clipboard-check", "people", "qr-code", "person", "gear"],
-        default_index=0
+        default_index=0,
     )
 
     if menu == "Inicio":
@@ -84,14 +95,15 @@ def main():
 
     elif menu == "Generar QR":
         if rol_nivel >= 3:
+            st.title("📲 Generar Código QR")
             generar_qrs()
         else:
             st.warning("🚫 Solo los ingenieros pueden generar códigos QR.")
 
     elif menu == "Perfil":
         st.title("👤 Mi Perfil")
-        st.write(f"Nombre del rol: **{rol_nombre}**")
-        st.write(f"Correo: **{user_email}**")
+        st.write(f"**Rol:** {rol_nombre}")
+        st.write(f"**Correo electrónico:** {user_email}")
 
     elif menu == "Configuración":
         if rol_nivel >= 5:
