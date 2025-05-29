@@ -98,19 +98,19 @@ def mostrar_login():
                 background-color: #951630; border-radius: 10px;">
         <h4>🔧 Funciones Principales</h4>
         <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 20px;">
-            <div style="background: white; padding: 15px; border-radius: 8px; min-width: 200px;">
+            <div style="background: red; padding: 15px; border-radius: 8px; min-width: 200px;">
                 <strong>⚙️ Mantenimientos</strong><br>
                 <small>Preventivos y correctivos</small>
             </div>
-            <div style="background: white; padding: 15px; border-radius: 8px; min-width: 200px;">
+            <div style="background: red; padding: 15px; border-radius: 8px; min-width: 200px;">
                 <strong>📦 Inventario</strong><br>
                 <small>Control de equipos médicos</small>
             </div>
-            <div style="background: white; padding: 15px; border-radius: 8px; min-width: 200px;">
+            <div style="background: red; padding: 15px; border-radius: 8px; min-width: 200px;">
                 <strong>📱 Códigos QR</strong><br>
                 <small>Identificación y reportes</small>
             </div>
-            <div style="background: white; padding: 15px; border-radius: 8px; min-width: 200px;">
+            <div style="background: red; padding: 15px; border-radius: 8px; min-width: 200px;">
                 <strong>📊 Reportes</strong><br>
                 <small>Análisis y KPIs</small>
             </div>
