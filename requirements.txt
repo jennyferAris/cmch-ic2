@@ -7,3 +7,5 @@ google-auth-oauthlib
 pandas
 oauth2client
 streamlit_oauth
+qrcode
+streamlit_qrcode
