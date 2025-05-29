@@ -16,7 +16,7 @@ numpy
 opencv-python-headless
 json
 streamlit-webrtc
-CV2
+opencv
 
 
 
