@@ -9,3 +9,5 @@ oauth2client
 streamlit_oauth
 qrcode
 Pillow
+google-api-python-client
+
