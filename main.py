@@ -141,8 +141,8 @@ st.title("🏥 PLATAFORMA DE INGENIERÍA CLÍNICA")
 with st.sidebar:
     # Información del usuario
     st.markdown(f"""
-    <div style="background-color: #8B0000; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-        <h4 style="margin: 0; color: #1f77b4;">👤 {name}</h4>
+    <div style="background-color: #820019; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        <h4 style="margin: 0; color: #fffff;">👤 {name}</h4>
         <p style="margin: 5px 0; font-size: 14px;">📧 {email}</p>
         <p style="margin: 5px 0; font-size: 14px;">🛡️ <strong>{rol_nombre}</strong></p>
         <p style="margin: 5px 0; font-size: 14px;">🏆 Nivel: {rol_nivel}</p>
