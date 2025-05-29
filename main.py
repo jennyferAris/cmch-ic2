@@ -1,139 +1,100 @@
 import streamlit as st
-from streamlit_oauth import OAuth2Component
-from streamlit_option_menu import option_menu
-from generar_qr import generar_qrs  # Tu función para generar QR
+from authlib.integrations.requests_client import OAuth2Session
+import requests
 import json
 
-# Leer configuración desde secrets.toml
-redirect_uri = st.secrets["auth"]["redirect_uri"]
-client_id = st.secrets["auth.google"]["client_id"]
-client_secret = st.secrets["auth.google"]["client_secret"]
-server_metadata_url = st.secrets["auth.google"]["server_metadata_url"]
-cookie_secret = st.secrets["auth"]["cookie_secret"]
+# --- Configuración desde secrets.toml ---
+CLIENT_ID = st.secrets["auth.google"]["client_id"]
+CLIENT_SECRET = st.secrets["auth.google"]["client_secret"]
+REDIRECT_URI = st.secrets["auth"]["redirect_uri"]
+DISCOVERY_URL = st.secrets["auth.google"]["server_metadata_url"]
+ROLES = json.loads(st.secrets["roles_autorizados"]["data"])
 
-# Inicializar componente OAuth2
-oauth2 = OAuth2Component(
-    client_id=client_id,
-    client_secret=client_secret,
-    auth_uri=server_metadata_url,
-    token_uri="https://oauth2.googleapis.com/token",
-    redirect_uri=redirect_uri,
-    scope="openid email profile",
-    cookie_secret=cookie_secret,
-)
+# Obtener endpoints de Google
+@st.cache_data(show_spinner=False)
+def get_google_provider_cfg():
+    return requests.get(DISCOVERY_URL).json()
 
-# Función para obtener información del usuario logueado
-def obtener_info_usuario():
-    token = oauth2.get_token()
-    if token is not None:
-        user_info = oauth2.get_user_info(token)
-        return user_info
-    return None
+provider_cfg = get_google_provider_cfg()
+authorization_endpoint = provider_cfg["authorization_endpoint"]
+token_endpoint = provider_cfg["token_endpoint"]
+userinfo_endpoint = provider_cfg["userinfo_endpoint"]
 
-# Cargar roles autorizados del secrets.toml (debe ser un JSON válido)
-roles_autorizados = json.loads(st.secrets["roles_autorizados"]["data"])
+def login():
+    oauth = OAuth2Session(
+        CLIENT_ID,
+        CLIENT_SECRET,
+        scope="openid email profile",
+        redirect_uri=REDIRECT_URI,
+    )
+    authorization_url, state = oauth.create_authorization_url(authorization_endpoint)
+    st.session_state["oauth_state"] = state
+    st.experimental_set_query_params()  # limpiar params
+    st.markdown(f"""
+        <a href="{authorization_url}" style="text-decoration:none;">
+        <button style="
+            padding:10px 20px; font-size:16px; background-color:#4285F4; color:white;
+            border:none; border-radius:5px; cursor:pointer;">
+            Ingresar con Google
+        </button>
+        </a>
+    """, unsafe_allow_html=True)
+
+def fetch_token(code):
+    oauth = OAuth2Session(
+        CLIENT_ID,
+        CLIENT_SECRET,
+        redirect_uri=REDIRECT_URI,
+        state=st.session_state.get("oauth_state"),
+    )
+    token = oauth.fetch_token(token_endpoint, code=code)
+    return token
+
+def get_userinfo(token):
+    oauth = OAuth2Session(CLIENT_ID, CLIENT_SECRET, token=token)
+    resp = oauth.get(userinfo_endpoint)
+    resp.raise_for_status()
+    return resp.json()
 
 def main():
-    st.set_page_config(page_title="CMCH App", layout="wide")
+    st.title("Sistema de Login Google - CMCH IC2")
 
-    # Logo en sidebar
-    st.sidebar.image(
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Cayetano_Heredia_University_logo.png/800px-Cayetano_Heredia_University_logo.png",
-        width=180,
-    )
-
-    # Obtener info usuario
-    user_info = obtener_info_usuario()
-
-    # Si no está autenticado, mostrar botón para login
-    if user_info is None:
-        st.title("🔒 Por favor inicia sesión")
-        if st.button("Ingresar con Google"):
-            oauth2.login()
-        st.stop()
-
-    # Usuario autenticado, verificar permiso
-    user_email = user_info.get("email", "")
-    if user_email not in roles_autorizados:
-        st.error("🚫 No tienes permiso para acceder a esta aplicación.")
-        st.stop()
-
-    rol_nombre, rol_nivel = roles_autorizados[user_email]
-    st.sidebar.success(f"Sesión iniciada como: **{rol_nombre}** ({user_email})")
-
-    # Menú principal
-    menu = option_menu(
-        menu_title="Menú Principal",
-        options=[
-            "Inicio",
-            "Ver Base de Datos",
-            "Asignación de Tareas",
-            "Gestión de Usuarios",
-            "Generar QR",
-            "Perfil",
-            "Configuración",
-            "Cerrar Sesión",
-        ],
-        icons=[
-            "house",
-            "database",
-            "clipboard-check",
-            "people",
-            "qr-code",
-            "person",
-            "gear",
-            "box-arrow-right",
-        ],
-        default_index=0,
-    )
-
-    if menu == "Inicio":
-        st.title("🏠 Bienvenido/a")
-        st.write("Este es el panel principal del sistema del Departamento de Ingeniería Clínica.")
-        st.info("Selecciona una opción del menú para comenzar.")
-
-    elif menu == "Ver Base de Datos":
-        st.title("📂 Base de Datos")
-        st.write("Aquí iría la lógica para visualizar registros según tu rol.")
-
-    elif menu == "Asignación de Tareas":
-        if rol_nivel >= 2:
-            st.title("✅ Asignación de Tareas")
-            st.write("Aquí iría la lógica para asignar y visualizar tareas.")
+    # Si ya autenticado, mostrar info y rol
+    if "user" in st.session_state:
+        user = st.session_state["user"]
+        email = user.get("email")
+        st.success(f"¡Bienvenido {email}!")
+        # Mostrar rol si autorizado
+        if email in ROLES:
+            rol_name, rol_id = ROLES[email]
+            st.info(f"Tu rol es: **{rol_name}** (ID: {rol_id})")
         else:
-            st.warning("🚫 No tienes permisos para ver esta sección.")
+            st.warning("No tienes un rol asignado en el sistema.")
 
-    elif menu == "Gestión de Usuarios":
-        if rol_nivel >= 4:
-            st.title("👥 Gestión de Usuarios")
-            st.write("Aquí se podrían añadir, modificar o eliminar usuarios.")
-        else:
-            st.warning("🚫 Solo los ingenieros profesionales o jefes pueden acceder.")
-
-    elif menu == "Generar QR":
-        if rol_nivel >= 3:
-            generar_qrs()
-        else:
-            st.warning("🚫 Solo los ingenieros pueden generar códigos QR.")
-
-    elif menu == "Perfil":
-        st.title("👤 Mi Perfil")
-        st.write(f"Nombre del rol: **{rol_nombre}**")
-        st.write(f"Correo: **{user_email}**")
-        st.json(user_info)
-
-    elif menu == "Configuración":
-        if rol_nivel >= 5:
-            st.title("⚙️ Configuración Avanzada")
-            st.write("Opciones para el jefe del departamento.")
-        else:
-            st.warning("🚫 Solo el jefe del departamento puede acceder.")
-
-    elif menu == "Cerrar Sesión":
         if st.button("Cerrar sesión"):
-            oauth2.logout()
+            st.session_state.pop("user")
             st.experimental_rerun()
 
+        # Aquí iría el resto de tu app con acceso autorizado
+        st.write("Contenido protegido para usuarios autenticados...")
+
+    else:
+        # Revisar si viene el código OAuth en la URL
+        query_params = st.experimental_get_query_params()
+        if "code" in query_params:
+            code = query_params["code"][0]
+            try:
+                token = fetch_token(code)
+                userinfo = get_userinfo(token)
+                st.session_state["user"] = userinfo
+                st.experimental_set_query_params()  # limpiar URL
+                st.experimental_rerun()
+            except Exception as e:
+                st.error(f"Error en autenticación: {e}")
+        else:
+            login()
 
 if __name__ == "__main__":
+    if "oauth_state" not in st.session_state:
+        st.session_state["oauth_state"] = None
     main()
