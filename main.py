@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 from base_datos import mostrar_base_datos
-from asignacion_tareas import mostrar_tareas_asignadas, mostrar_todas_las_tareas, asignar_tarea_form
+from asignar_tareas import mostrar_tareas_asignadas, mostrar_todas_las_tareas, asignar_tarea_form
 import json
 
 # Cargar roles desde secrets.toml
