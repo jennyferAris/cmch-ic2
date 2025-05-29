@@ -1,111 +1,74 @@
 import streamlit as st
-from streamlit_option_menu import option_menu
-from base_datos import mostrar_base_datos
-import json
 from authlib.integrations.requests_client import OAuth2Session
 import urllib.parse
+import json
+from base_datos import mostrar_base_datos
 
-# Configuración desde secrets
-roles_json = st.secrets["roles_autorizados"]["data"]
-ROLES = json.loads(roles_json)
+# Cargar configuración desde secrets
+redirect_uri = st.secrets["auth"]["redirect_uri"]
+client_id = st.secrets["auth"]["google"]["client_id"]
+client_secret = st.secrets["auth"]["google"]["client_secret"]
+server_metadata_url = st.secrets["auth"]["google"]["server_metadata_url"]
 
-auth_config = st.secrets["auth"]
-google_config = st.secrets["auth.google"]
+# Roles autorizados
+roles_autorizados = json.loads(st.secrets["roles_autorizados"]["data"])
 
-# Parámetros OAuth
-client_id = google_config["client_id"]
-client_secret = google_config["client_secret"]
-redirect_uri = auth_config["redirect_uri"]
-server_metadata_url = google_config["server_metadata_url"]
+# Inicializar sesión OAuth2
+oauth = OAuth2Session(
+    client_id=client_id,
+    client_secret=client_secret,
+    redirect_uri=redirect_uri,
+    scope="openid email profile"
+)
 
-# Obtener metadata de Google (endpoints)
-import requests
+# Obtener configuración del servidor de autenticación
+oauth.fetch_server_metadata(server_metadata_url)
 
-metadata = requests.get(server_metadata_url).json()
-authorization_endpoint = metadata["authorization_endpoint"]
-token_endpoint = metadata["token_endpoint"]
-userinfo_endpoint = metadata["userinfo_endpoint"]
+# URL para redirigir a Google Login
+auth_url, state = oauth.create_authorization_url(oauth.server_metadata["authorization_endpoint"])
 
-def get_authorization_url(state):
-    oauth = OAuth2Session(client_id, client_secret, scope="openid email profile", redirect_uri=redirect_uri)
-    uri, _ = oauth.create_authorization_url(authorization_endpoint, state=state, prompt="select_account")
-    return uri
+# Guardar estado en session_state
+if "state" not in st.session_state:
+    st.session_state["state"] = state
 
-def get_token(code):
-    oauth = OAuth2Session(client_id, client_secret, scope="openid email profile", redirect_uri=redirect_uri)
-    token = oauth.fetch_token(token_endpoint, code=code)
-    return token
+# Mostrar botón de login si aún no hay token
+if "token" not in st.session_state:
 
-def get_userinfo(token):
-    oauth = OAuth2Session(client_id, client_secret, token=token)
-    resp = oauth.get(userinfo_endpoint)
-    return resp.json()
+    query_params = st.query_params
+    if "code" not in query_params:
+        st.title("Inicio de sesión")
+        st.markdown("Inicia sesión con tu cuenta de Google institucional")
+        st.link_button("🔐 Iniciar sesión con Google", auth_url)
 
-st.set_page_config(page_title="Sistema de Inventario", layout="wide")
-
-# Paso 1: Leer query params para detectar código OAuth2
-query_params = st.experimental_get_query_params()
-if "code" in query_params:
-    code = query_params["code"][0]
-    # Intercambiar código por token
-    token = get_token(code)
-    # Obtener info usuario
-    userinfo = get_userinfo(token)
-    email = userinfo.get("email")
-    if email in ROLES:
-        st.session_state["user"] = userinfo
-        # Limpiar URL para que no repita el código
-        st.experimental_set_query_params()
-        st.experimental_rerun()
     else:
-        st.error("🚫 Acceso denegado. Tu cuenta no está autorizada.")
-        st.stop()
-
-if "user" not in st.session_state:
-    st.title("🔐 Login")
-    if st.button("Iniciar sesión con Google"):
-        # Generar URL autorización y redirigir (abrir en nueva ventana)
-        import uuid
-        state = str(uuid.uuid4())
-        auth_url = get_authorization_url(state)
-        st.markdown(f"[Haz clic aquí para iniciar sesión]({auth_url})", unsafe_allow_html=True)
-else:
-    user = st.session_state["user"]
-    email = user["email"]
-    name = user.get("name", "Usuario")
-    picture = user.get("picture")
-    role = ROLES.get(email, ["Invitado", 0])[0]
-
-    st.title("PLATAFORMA DE INGENIERÍA CLÍNICA")
-
-    with st.sidebar:
-        st.markdown(f"👤 **{name}**\n📧 {email}\n🛡️ Rol: `{role}`")
-        menu = option_menu(
-            menu_title="Menú Principal",
-            options=["Inicio", "Ver Base de Datos", "Perfil", "Configuración"],
-            icons=["house", "database", "person", "gear"],
-            default_index=0
+        # Intercambiar 'code' por token
+        token = oauth.fetch_token(
+            oauth.server_metadata["token_endpoint"],
+            authorization_response=st.request.url,
+            code=query_params["code"],
         )
-        if st.button("Cerrar sesión"):
-            st.session_state.clear()
-            st.experimental_rerun()
+        st.session_state["token"] = token
 
-    if menu == "Inicio":
-        st.title("🏥 Bienvenido al Sistema de Inventario")
-        st.write("Navega usando el menú lateral para ver y gestionar los equipos médicos.")
+        # Obtener datos del usuario
+        user_info = oauth.get(oauth.server_metadata["userinfo_endpoint"]).json()
+        st.session_state["user_info"] = user_info
 
-    elif menu == "Ver Base de Datos":
+        st.rerun()
+
+# Si ya hay token, mostrar contenido
+if "token" in st.session_state:
+    user_info = st.session_state["user_info"]
+    user_email = user_info["email"]
+
+    st.success(f"Has iniciado sesión como {user_email}")
+
+    if user_email in roles_autorizados:
+        nombre_rol, nivel = roles_autorizados[user_email]
+        st.info(f"Tu rol es: **{nombre_rol}** (nivel {nivel})")
+
+        # Mostrar la base de datos o interfaz principal aquí
         mostrar_base_datos()
 
-    elif menu == "Perfil":
-        st.title("👤 Perfil del Usuario")
-        if picture:
-            st.image(picture)
-        st.write(f"Nombre: {name}")
-        st.write(f"Correo: {email}")
-        st.write(f"Rol: {role}")
-        st.json(user)
+    else:
+        st.error("Tu correo no está autorizado para acceder a esta aplicación.")
 
-    elif menu == "Configuración":
-        st.title("⚙️ Configuración")
-        st.write("Aquí irán las opciones de configuración personalizadas.")

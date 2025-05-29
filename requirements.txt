@@ -1,5 +1,4 @@
 streamlit
-Authlib
 streamlit_option_menu
 gspread
 google-auth
