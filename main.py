@@ -72,17 +72,12 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    st.markdown("""
-    <div style="text-align: center; padding: 50px;">
-        <h1>🏥 PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA</h1>
-        <h3>Sistema de Gestión de Equipos Médicos</h3>
-        <br>
-        <p style="font-size: 18px; color: #666;">
-            Sistema integral para mantenimiento preventivo, inventario y gestión técnica.<br>
-            Para continuar, inicia sesión con tu cuenta autorizada.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("# 🏥 PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA")
+    st.markdown("### Sistema de Gestión de Equipos Médicos")
+    st.write("")
+    st.write("Sistema integral para mantenimiento preventivo, inventario y gestión técnica.")
+    st.write("Para continuar, inicia sesión con tu cuenta autorizada.")
+    st.write("")
     
     col1, col2, col3 = st.columns([1, 2, 1])
     
@@ -92,51 +87,6 @@ def mostrar_login():
                     use_container_width=True,
                     help="Haz clic para iniciar sesión con tu cuenta de Google"):
             st.login("google")
-    
-# Usando containers de Streamlit con estilos más simples
-st.markdown("""
-<div style="background-color: #DC143C; padding: 30px; border-radius: 15px; margin: 20px 0;">
-    <h3 style="text-align: center; color: #FFD700; margin-bottom: 30px;">🔧 Funciones Principales</h3>
-</div>
-""", unsafe_allow_html=True)
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.markdown("""
-    <div style="background-color: #FFD700; color: #8B0000; padding: 20px; 
-                border-radius: 12px; text-align: center; border: 2px solid #B8860B;">
-        <h4>⚙️ Mantenimientos</h4>
-        <p>Preventivos y correctivos</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    st.markdown("""
-    <div style="background-color: #FFD700; color: #8B0000; padding: 20px; 
-                border-radius: 12px; text-align: center; border: 2px solid #B8860B;">
-        <h4>📦 Inventario</h4>
-        <p>Control de equipos médicos</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col3:
-    st.markdown("""
-    <div style="background-color: #FFD700; color: #8B0000; padding: 20px; 
-                border-radius: 12px; text-align: center; border: 2px solid #B8860B;">
-        <h4>📱 Códigos QR</h4>
-        <p>Identificación y reportes</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col4:
-    st.markdown("""
-    <div style="background-color: #FFD700; color: #8B0000; padding: 20px; 
-                border-radius: 12px; text-align: center; border: 2px solid #B8860B;">
-        <h4>📊 Reportes</h4>
-        <p>Análisis y KPIs</p>
-    </div>
-    """, unsafe_allow_html=True)
 
 # Verificar si el usuario está logueado
 if not st.user.is_logged_in:
@@ -203,9 +153,9 @@ with st.sidebar:
         default_index=0,
         styles={
             "container": {"padding": "0!important"},
-            "icon": {"color": "#1f77b4", "font-size": "18px"},
+            "icon": {"color": "#DC143C", "font-size": "18px"},
             "nav-link": {"font-size": "16px", "text-align": "left", "margin": "0px"},
-            "nav-link-selected": {"background-color": "#1f77b4"},
+            "nav-link-selected": {"background-color": "#DC143C"},
         }
     )
 
@@ -260,12 +210,11 @@ if menu == "Inicio":
     
     # Actividad reciente
     st.markdown("### 📋 Actividad Reciente")
-    with st.container():
-        st.info("🔄 Sistema de Ingeniería Clínica inicializado correctamente")
-        if rol_nivel >= 3:
-            st.success("✅ Permisos de supervisión activos")
-        if rol_nivel >= 5:
-            st.success("🎛️ Panel de administración disponible")
+    st.info("🔄 Sistema de Ingeniería Clínica inicializado correctamente")
+    if rol_nivel >= 3:
+        st.success("✅ Permisos de supervisión activos")
+    if rol_nivel >= 5:
+        st.success("🎛️ Panel de administración disponible")
 
 elif menu == "Base de Datos":
     mostrar_base_datos()
@@ -311,14 +260,6 @@ st.sidebar.markdown("---")
 if st.sidebar.button("🚪 Cerrar Sesión", type="secondary", use_container_width=True):
     st.logout()
 
-# Footer
+# Footer limpio
 st.markdown("---")
-st.markdown(
-    """
-    <div style="text-align: center; color: #888; padding: 20px;">
-        🏥 Sistema de Ingeniería Clínica v1.0 | 
-        Enfocado en mantenimiento preventivo y gestión técnica
-    </div>
-    """, 
-    unsafe_allow_html=True
-)
+st.markdown("🏥 **Sistema de Ingeniería Clínica v1.0** | Enfocado en mantenimiento preventivo y gestión técnica")
