@@ -1,74 +1,51 @@
 import streamlit as st
 from authlib.integrations.requests_client import OAuth2Session
-import urllib.parse
+import os
 import json
-from base_datos import mostrar_base_datos
+import urllib.parse
 
-# Cargar configuración desde secrets
-redirect_uri = st.secrets["auth"]["redirect_uri"]
+# Configuración
 client_id = st.secrets["auth"]["google"]["client_id"]
 client_secret = st.secrets["auth"]["google"]["client_secret"]
+redirect_uri = st.secrets["auth"]["redirect_uri"]
 server_metadata_url = st.secrets["auth"]["google"]["server_metadata_url"]
+cookie_secret = st.secrets["auth"]["cookie_secret"]
 
-# Roles autorizados
+# Diccionario de roles autorizados
 roles_autorizados = json.loads(st.secrets["roles_autorizados"]["data"])
 
-# Inicializar sesión OAuth2
-oauth = OAuth2Session(
-    client_id=client_id,
-    client_secret=client_secret,
-    redirect_uri=redirect_uri,
-    scope="openid email profile"
-)
+# Sesión OAuth
+oauth = OAuth2Session(client_id, client_secret, redirect_uri=redirect_uri)
 
-# Obtener configuración del servidor de autenticación
-oauth.fetch_server_metadata(server_metadata_url)
+# Intentar cargar metadata desde Google o fallback manual
+try:
+    oauth.fetch_server_metadata(server_metadata_url)
+except Exception as e:
+    st.warning("Fallo al obtener metadata de Google. Usando configuración manual.")
+    oauth.register_client_metadata({
+        "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+        "token_endpoint": "https://oauth2.googleapis.com/token",
+        "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo"
+    })
 
-# URL para redirigir a Google Login
-auth_url, state = oauth.create_authorization_url(oauth.server_metadata["authorization_endpoint"])
+# Obtener parámetros del callback
+query_params = st.experimental_get_query_params()
 
-# Guardar estado en session_state
-if "state" not in st.session_state:
-    st.session_state["state"] = state
+if "code" in query_params:
+    # Intercambiar código por token
+    code = query_params["code"][0]
+    token = oauth.fetch_token(code=code)
+    user_info = oauth.get("userinfo").json()
+    correo = user_info["email"]
 
-# Mostrar botón de login si aún no hay token
-if "token" not in st.session_state:
-
-    query_params = st.query_params
-    if "code" not in query_params:
-        st.title("Inicio de sesión")
-        st.markdown("Inicia sesión con tu cuenta de Google institucional")
-        st.link_button("🔐 Iniciar sesión con Google", auth_url)
-
+    if correo in roles_autorizados:
+        rol, nivel = roles_autorizados[correo]
+        st.success(f"Bienvenida/o {rol}")
+        st.write(f"Tu correo es: {correo}")
+        st.write(f"Tu nivel de acceso es: {nivel}")
     else:
-        # Intercambiar 'code' por token
-        token = oauth.fetch_token(
-            oauth.server_metadata["token_endpoint"],
-            authorization_response=st.request.url,
-            code=query_params["code"],
-        )
-        st.session_state["token"] = token
-
-        # Obtener datos del usuario
-        user_info = oauth.get(oauth.server_metadata["userinfo_endpoint"]).json()
-        st.session_state["user_info"] = user_info
-
-        st.rerun()
-
-# Si ya hay token, mostrar contenido
-if "token" in st.session_state:
-    user_info = st.session_state["user_info"]
-    user_email = user_info["email"]
-
-    st.success(f"Has iniciado sesión como {user_email}")
-
-    if user_email in roles_autorizados:
-        nombre_rol, nivel = roles_autorizados[user_email]
-        st.info(f"Tu rol es: **{nombre_rol}** (nivel {nivel})")
-
-        # Mostrar la base de datos o interfaz principal aquí
-        mostrar_base_datos()
-
-    else:
-        st.error("Tu correo no está autorizado para acceder a esta aplicación.")
-
+        st.error("No estás autorizado para acceder a esta aplicación.")
+else:
+    # Si no hay código, mostrar botón de login
+    auth_url, state = oauth.create_authorization_url(oauth.server_metadata["authorization_endpoint"], access_type="offline", prompt="consent")
+    st.markdown(f"[Iniciar sesión con Google]({auth_url})")
