@@ -1,0 +1,8 @@
+streamlit
+Authlib
+streamlit_option_menu
+gspread
+google-auth
+google-auth-oauthlib
+pandas
+oauth2client
