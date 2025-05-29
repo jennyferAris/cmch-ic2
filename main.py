@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 from base_datos import mostrar_base_datos
-from generador_qr import generar_qrs  # ← Nueva importación
+from generar_qr import generar_qrs  # ← Nueva importación
 import json
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
