@@ -1,31 +1,31 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 from base_datos import mostrar_base_datos
-from asignar_tareas import mostrar_tareas_asignadas, mostrar_todas_las_tareas, asignar_tarea_form
+from asignacion_tareas import mostrar_tareas_asignadas, mostrar_todas_las_tareas, asignar_tarea_form
+import json
 
-# Diccionario de roles autorizados con niveles
-ROLES = {
-    "pasante0@gmail.com": ("Pasante 0", 0),
-    "pasante1@gmail.com": ("Pasante 1", 1),
-    "pasante2@gmail.com": ("Pasante 2", 2),
-    "prepro@gmail.com": ("Ingeniero Preprofesional", 3),
-    "profesional@gmail.com": ("Ingeniero Profesional", 4),
-    "jear142003@gmail.com": ("Jefe del Departamento", 5)
-}
+# Cargar roles desde secrets.toml
+roles_data = st.secrets["roles_autorizados"]["data"]
+ROLES = json.loads(roles_data)
 
 st.set_page_config(page_title="Sistema de Inventario", layout="wide")
 st.title("PLATAFORMA DE INGENIERÍA CLÍNICA")
 
-# Autenticación
-if not st.user.is_logged_in:
-    st.login("google")
+# Autenticación simple, suponiendo st.user tiene info
+if not st.session_state.get("user_authenticated", False):
+    # Aquí iría tu lógica de login, por ahora simulamos con un input
+    email_input = st.text_input("Ingresa tu correo institucional para autenticar")
+    if email_input:
+        if email_input in ROLES:
+            st.session_state["user_authenticated"] = True
+            st.session_state["email"] = email_input
+        else:
+            st.error("Correo no autorizado")
     st.stop()
 
-email = st.user.email
-name = st.user.name
+email = st.session_state["email"]
 rol_info = ROLES.get(email)
 
-# Acceso denegado si el correo no está en la lista
 if rol_info is None:
     st.error("🚫 Acceso denegado. Tu cuenta no está autorizada.")
     st.stop()
@@ -34,26 +34,27 @@ role, rol_nivel = rol_info
 
 # Sidebar con menú
 with st.sidebar:
-    st.markdown(f"👤 **{name}**\n📧 {email}\n🛡️ Rol: `{role}`")
+    st.markdown(f"👤 **{email}**\n🛡️ Rol: `{role}`")
     menu = option_menu(
         menu_title="Menú Principal",
-        options=["Inicio", "Ver Base de Datos", "Asignación de Tareas", "Perfil", "Configuración"],
-        icons=["house", "database", "clipboard-check", "person", "gear"],
+        options=["Inicio", "Ver Base de Datos", "Asignación de Tareas", "Gestión de Usuarios", "Perfil", "Configuración"],
+        icons=["house", "database", "clipboard-check", "people", "person", "gear"],
         default_index=0
     )
     if st.button("Cerrar sesión"):
-        st.logout()
+        st.session_state.clear()
+        st.experimental_rerun()
 
-# Sección de inicio
+# Sección inicio
 if menu == "Inicio":
     st.title("🏥 Bienvenido al Sistema de Inventario")
     st.write("Navega usando el menú lateral para ver y gestionar los equipos médicos.")
 
-# Sección de base de datos
+# Base de datos
 elif menu == "Ver Base de Datos":
     mostrar_base_datos()
 
-# Asignación de Tareas
+# Tareas
 elif menu == "Asignación de Tareas":
     st.title("🗂️ Asignación de Tareas")
     if rol_nivel in [1, 2]:
@@ -64,15 +65,19 @@ elif menu == "Asignación de Tareas":
     else:
         st.warning("🔒 Tu rol actual no tiene acceso a tareas asignadas.")
 
+# Gestión de Usuarios solo para jefe (nivel 5)
+elif menu == "Gestión de Usuarios":
+    if rol_nivel == 5:
+        from gestion_usuarios import gestion_usuarios_app
+        gestion_usuarios_app(ROLES)
+    else:
+        st.warning("🚫 No tienes permiso para acceder a esta sección.")
+
 # Perfil
 elif menu == "Perfil":
     st.title("👤 Perfil del Usuario")
-    st.image(st.user.picture)
-    st.write(f"Nombre: {name}")
     st.write(f"Correo: {email}")
     st.write(f"Rol: {role}")
-    with st.expander("Ver token completo"):
-        st.json(st.user.to_dict())
 
 # Configuración
 elif menu == "Configuración":
