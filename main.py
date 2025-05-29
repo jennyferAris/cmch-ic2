@@ -148,13 +148,51 @@ st.title("🏥 PLATAFORMA DE INGENIERÍA CLÍNICA")
 
 # Sidebar con información del usuario y menú
 with st.sidebar:
-    # Información del usuario
+    # Información del usuario con estilo Cayetano
     st.markdown(f"""
-    <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-        <h4 style="margin: 0; color: #1f77b4;">👤 {name}</h4>
-        <p style="margin: 5px 0; font-size: 14px;">📧 {email}</p>
-        <p style="margin: 5px 0; font-size: 14px;">🛡️ <strong>{rol_nombre}</strong></p>
-        <p style="margin: 5px 0; font-size: 14px;">🏆 Nivel: {rol_nivel}</p>
+    <div style="
+        background: linear-gradient(135deg, #B71C1C 0%, #DC143C 100%);
+        padding: 20px; 
+        border-radius: 15px; 
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
+        text-align: center;
+        color: white;
+    ">
+        <div style="
+            background-color: rgba(255, 255, 255, 0.2);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        ">
+            👤
+        </div>
+        <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: bold;">
+            {name}
+        </h3>
+        <p style="margin: 0 0 12px 0; font-size: 14px; opacity: 0.9;">
+            {email}
+        </p>
+        <div style="
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 20px;
+            margin: 10px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        ">
+            <span style="font-size: 16px;">🛡️</span>
+            <span style="font-weight: bold; font-size: 14px;">{rol_nombre}</span>
+        </div>
+        <p style="margin: 8px 0 0 0; font-size: 16px; font-weight: bold;">
+            Nivel: {rol_nivel}
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -178,7 +216,6 @@ with st.sidebar:
             "nav-link-selected": {"background-color": "#DC143C"},
         }
     )
-
 # Contenido principal según la selección del menú
 if menu == "Inicio":
     st.markdown(f"## 🎯 Bienvenido, {rol_nombre}")
