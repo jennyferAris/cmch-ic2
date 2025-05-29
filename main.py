@@ -11,16 +11,18 @@ ROLES = json.loads(roles_data)
 st.set_page_config(page_title="Sistema de Inventario", layout="wide")
 st.title("PLATAFORMA DE INGENIERÍA CLÍNICA")
 
-# Autenticación simple, suponiendo st.user tiene info
+# Autenticación simple con botón "Ingresar"
 if not st.session_state.get("user_authenticated", False):
-    # Aquí iría tu lógica de login, por ahora simulamos con un input
     email_input = st.text_input("Ingresa tu correo institucional para autenticar")
+    
     if email_input:
-        if email_input in ROLES:
-            st.session_state["user_authenticated"] = True
-            st.session_state["email"] = email_input
-        else:
-            st.error("Correo no autorizado")
+        if st.button("Ingresar"):
+            if email_input in ROLES:
+                st.session_state["user_authenticated"] = True
+                st.session_state["email"] = email_input
+                st.experimental_rerun()  # recarga la app para reflejar el login
+            else:
+                st.error("Correo no autorizado")
     st.stop()
 
 email = st.session_state["email"]
