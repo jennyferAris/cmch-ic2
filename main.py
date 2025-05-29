@@ -74,7 +74,7 @@ def obtener_iconos_menu(menus):
 def mostrar_login():
     st.markdown("""
     <div style="text-align: center; padding: 50px;">
-        <h1>🏥 PLATAFORMA DE INGENIERÍA CLÍNICA</h1>
+        <h1>🏥 PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA</h1>
         <h3>Sistema de Gestión de Equipos Médicos</h3>
         <br>
         <p style="font-size: 18px; color: #666;">
@@ -95,7 +95,7 @@ def mostrar_login():
     
     st.markdown("""
     <div style="text-align: center; margin-top: 50px; padding: 20px; 
-                background-color: #f0f2f6; border-radius: 10px;">
+                background-color: #951630; border-radius: 10px;">
         <h4>🔧 Funciones Principales</h4>
         <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 20px;">
             <div style="background: white; padding: 15px; border-radius: 8px; min-width: 200px;">
