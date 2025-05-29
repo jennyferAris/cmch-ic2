@@ -1,51 +1,65 @@
 import streamlit as st
-from authlib.integrations.requests_client import OAuth2Session
-import os
-import json
-import urllib.parse
+from streamlit_option_menu import option_menu
+from base_datos import mostrar_base_datos
 
-# Configuración
-client_id = st.secrets["auth"]["google"]["client_id"]
-client_secret = st.secrets["auth"]["google"]["client_secret"]
-redirect_uri = st.secrets["auth"]["redirect_uri"]
-server_metadata_url = st.secrets["auth"]["google"]["server_metadata_url"]
-cookie_secret = st.secrets["auth"]["cookie_secret"]
 
 # Diccionario de roles autorizados
-roles_autorizados = json.loads(st.secrets["roles_autorizados"]["data"])
+ROLES = {
+    "daang0406@gmail.com": "Ingeniero Clínico",
+    "jear142003@gmail.com": "Practicante"
+}
 
-# Sesión OAuth
-oauth = OAuth2Session(client_id, client_secret, redirect_uri=redirect_uri)
+st.set_page_config(page_title="Sistema de Inventario", layout="wide")
+st.title("PLATAFORMA DE INGENIERÍA CLÍNICA")
 
-# Intentar cargar metadata desde Google o fallback manual
-try:
-    oauth.fetch_server_metadata(server_metadata_url)
-except Exception as e:
-    st.warning("Fallo al obtener metadata de Google. Usando configuración manual.")
-    oauth.register_client_metadata({
-        "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
-        "token_endpoint": "https://oauth2.googleapis.com/token",
-        "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo"
-    })
+# Autenticación
+if not st.user.is_logged_in:
+    st.login("google")
+    st.stop()
 
-# Obtener parámetros del callback
-query_params = st.experimental_get_query_params()
+email = st.user.email
+name = st.user.name
+role = ROLES.get(email)
 
-if "code" in query_params:
-    # Intercambiar código por token
-    code = query_params["code"][0]
-    token = oauth.fetch_token(code=code)
-    user_info = oauth.get("userinfo").json()
-    correo = user_info["email"]
+# Acceso denegado si el correo no está en la lista
+if role is None:
+    st.error("🚫 Acceso denegado. Tu cuenta no está autorizada.")
+    st.stop()
 
-    if correo in roles_autorizados:
-        rol, nivel = roles_autorizados[correo]
-        st.success(f"Bienvenida/o {rol}")
-        st.write(f"Tu correo es: {correo}")
-        st.write(f"Tu nivel de acceso es: {nivel}")
-    else:
-        st.error("No estás autorizado para acceder a esta aplicación.")
-else:
-    # Si no hay código, mostrar botón de login
-    auth_url, state = oauth.create_authorization_url(oauth.server_metadata["authorization_endpoint"], access_type="offline", prompt="consent")
-    st.markdown(f"[Iniciar sesión con Google]({auth_url})")
+# Sidebar con menú
+with st.sidebar:
+    st.markdown(f"👤 **{name}**\n📧 {email}\n🛡️ Rol: `{role}`")
+    menu = option_menu(
+        menu_title="Menú Principal",
+        options=["Inicio", "Ver Base de Datos", "Perfil", "Configuración"],
+        icons=["house", "database", "person", "gear"],
+        default_index=0
+    )
+
+# Sección de inicio
+if menu == "Inicio":
+    st.title("🏥 Bienvenido al Sistema de Inventario")
+    st.write("Navega usando el menú lateral para ver y gestionar los equipos médicos.")
+
+# Sección de base de datos
+elif menu == "Ver Base de Datos":
+    mostrar_base_datos()
+
+# Perfil
+elif menu == "Perfil":
+    st.title("👤 Perfil del Usuario")
+    st.image(st.user.picture)
+    st.write(f"Nombre: {name}")
+    st.write(f"Correo: {email}")
+    st.write(f"Rol: {role}")
+    with st.expander("Ver token completo"):
+        st.json(st.user.to_dict())
+
+# Configuración
+elif menu == "Configuración":
+    st.title("⚙️ Configuración")
+    st.write("Aquí irán las opciones de configuración personalizadas.")
+
+# Logout
+if st.sidebar.button("Cerrar sesión"):
+    st.logout()
