@@ -14,15 +14,15 @@ st.title("PLATAFORMA DE INGENIERÍA CLÍNICA")
 # Autenticación simple con botón "Ingresar"
 if not st.session_state.get("user_authenticated", False):
     email_input = st.text_input("Ingresa tu correo institucional para autenticar")
+    login_clicked = st.button("Ingresar")
     
-    if email_input:
-        if st.button("Ingresar"):
-            if email_input in ROLES:
-                st.session_state["user_authenticated"] = True
-                st.session_state["email"] = email_input
-                st.experimental_rerun()  # recarga la app para reflejar el login
-            else:
-                st.error("Correo no autorizado")
+    if login_clicked:
+        if email_input in ROLES:
+            st.session_state["user_authenticated"] = True
+            st.session_state["email"] = email_input
+            st.experimental_rerun()  # recarga la app para reflejar el login
+        else:
+            st.error("Correo no autorizado")
     st.stop()
 
 email = st.session_state["email"]
@@ -85,3 +85,4 @@ elif menu == "Perfil":
 elif menu == "Configuración":
     st.title("⚙️ Configuración")
     st.write("Aquí irán las opciones de configuración personalizadas.")
+
