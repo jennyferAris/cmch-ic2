@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 from base_datos import mostrar_base_datos
+from generador_qr import generar_qrs  # ← Nueva importación
 import json
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
@@ -70,23 +71,31 @@ def obtener_iconos_menu(menus):
     }
     return [iconos.get(menu, "circle") for menu in menus]
 
-
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    # Centrar todo el contenido del login
+    # Crear espacio superior
+    st.write("")
+    st.write("")
+    
+    # Centrar todo el contenido
     st.markdown("""
-    <div style="text-align: center; padding: 50px 20px;">
-        <h1>🏥 PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA</h1>
-        <h3>Sistema de Gestión de Equipos Médicos</h3>
-        <br>
-        <p style="font-size: 18px; color: #666; max-width: 600px; margin: 0 auto;">
-            Sistema integral para mantenimiento preventivo, inventario y gestión técnica.<br>
+    <div style="text-align: center; padding: 40px 20px; max-width: 800px; margin: 0 auto;">
+        <h1 style="color: #DC143C; margin-bottom: 10px;">
+            🏥 PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA
+        </h1>
+        <h3 style="color: #666; margin-bottom: 30px;">
+            Sistema de Gestión de Equipos Médicos
+        </h3>
+        <p style="font-size: 18px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+            Sistema integral para mantenimiento preventivo, inventario y gestión técnica.
+        </p>
+        <p style="font-size: 16px; color: #777;">
             Para continuar, inicia sesión con tu cuenta autorizada.
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Espacio adicional
+    # Espacio antes del botón
     st.write("")
     
     # Centrar el botón de login
@@ -141,8 +150,8 @@ st.title("🏥 PLATAFORMA DE INGENIERÍA CLÍNICA")
 with st.sidebar:
     # Información del usuario
     st.markdown(f"""
-    <div style="background-color: #820019; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-        <h4 style="margin: 0; color: #fffff;">👤 {name}</h4>
+    <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+        <h4 style="margin: 0; color: #1f77b4;">👤 {name}</h4>
         <p style="margin: 5px 0; font-size: 14px;">📧 {email}</p>
         <p style="margin: 5px 0; font-size: 14px;">🛡️ <strong>{rol_nombre}</strong></p>
         <p style="margin: 5px 0; font-size: 14px;">🏆 Nivel: {rol_nivel}</p>
@@ -233,10 +242,14 @@ elif menu == "Base de Datos":
 elif menu == "Dashboard KPIs" and rol_nivel >= 5:
     st.title("📊 Dashboard de KPIs")
     st.info("📈 Módulo en desarrollo - Métricas y indicadores del departamento")
-    
+
+# ← AQUÍ ESTÁ LA INTEGRACIÓN DEL GENERADOR QR
 elif menu == "Generador QR" and rol_nivel >= 5:
-    st.title("🔧 Generador de Códigos QR")
-    st.info("🏷️ Módulo en desarrollo - Generación de QR para equipos médicos")
+    generar_qrs()  # ← Llama a tu función del generador QR
+
+elif menu == "Asignación Tareas" and rol_nivel >= 5:
+    st.title("📋 Asignación de Tareas")
+    st.info("📝 Módulo en desarrollo - Sistema de asignación de tareas")
     
 elif menu == "Gestión Usuarios" and rol_nivel >= 5:
     st.title("👥 Gestión de Usuarios")
@@ -261,6 +274,34 @@ elif menu == "Escáner QR" and rol_nivel == 6:
 elif menu == "Reportar Evento" and rol_nivel == 6:
     st.title("📝 Reportar Evento")
     st.info("🚨 Módulo en desarrollo - Sistema de reportes de eventos técnicos")
+
+elif menu == "Fichas Técnicas":
+    st.title("📋 Fichas Técnicas")
+    st.info("📄 Módulo en desarrollo - Fichas técnicas de equipos")
+
+elif menu == "Mis Reportes":
+    st.title("📊 Mis Reportes")
+    st.info("📈 Módulo en desarrollo - Reportes personalizados")
+
+elif menu == "Gestión Pasantes":
+    st.title("👥 Gestión de Pasantes")
+    st.info("🎓 Módulo en desarrollo - Administración de pasantes")
+
+elif menu == "Supervisión":
+    st.title("👁️ Supervisión")
+    st.info("🔍 Módulo en desarrollo - Panel de supervisión")
+
+elif menu == "Pasantes":
+    st.title("👨‍🎓 Gestión de Pasantes")
+    st.info("📚 Módulo en desarrollo - Administración de pasantes")
+
+elif menu == "Reportes":
+    st.title("📄 Reportes del Sistema")
+    st.info("📊 Módulo en desarrollo - Generación de reportes")
+
+elif menu == "Rendimiento Equipo":
+    st.title("🏆 Rendimiento del Equipo")
+    st.info("📈 Módulo en desarrollo - Métricas de rendimiento")
 
 else:
     st.title(f"🔧 {menu}")
