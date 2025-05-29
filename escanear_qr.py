@@ -3,41 +3,9 @@ import cv2
 from pyzbar import pyzbar
 import numpy as np
 from PIL import Image
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
-
-class QRCodeScanner(VideoTransformerBase):
-    """Clase para procesar video y detectar códigos QR"""
-    
-    def __init__(self):
-        self.qr_data = None
-        self.qr_detected = False
-    
-    def transform(self, frame):
-        img = frame.to_ndarray(format="bgr24")
-        
-        # Detectar códigos QR
-        codigos = pyzbar.decode(img)
-        
-        for codigo in codigos:
-            # Extraer datos del QR
-            qr_text = codigo.data.decode('utf-8')
-            self.qr_data = qr_text
-            self.qr_detected = True
-            
-            # Dibujar rectángulo alrededor del QR
-            puntos = codigo.polygon
-            if len(puntos) == 4:
-                pts = np.array([[p.x, p.y] for p in puntos], np.int32)
-                cv2.polylines(img, [pts], True, (0, 255, 0), 3)
-                
-                # Mostrar el texto del QR
-                cv2.putText(img, qr_text, (puntos[0].x, puntos[0].y - 10),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-        
-        return img
 
 def decodificar_qr_imagen(imagen_array):
-    """Decodificar QR de una imagen estática"""
+    """Decodificar QR de una imagen"""
     try:
         # Convertir a escala de grises si es necesario
         if len(imagen_array.shape) == 3:
@@ -62,61 +30,60 @@ def decodificar_qr_imagen(imagen_array):
 def mostrar_escaner_qr():
     """Función principal del escáner QR"""
     st.title("📱 Escáner de Códigos QR")
-    st.write("Escanea códigos QR usando la cámara o subiendo una imagen")
+    st.write("Escanea códigos QR subiendo una imagen o usando la cámara")
     
     # Tabs para diferentes métodos
-    tab1, tab2 = st.tabs(["📷 Cámara en Vivo", "📁 Subir Imagen"])
+    tab1, tab2 = st.tabs(["📷 Cámara", "📁 Subir Imagen"])
     
     with tab1:
         st.subheader("📷 Escáner con Cámara")
-        st.write("Apunta la cámara hacia el código QR para escanearlo")
         
-        # Configuración WebRTC
-        rtc_config = RTCConfiguration({
-            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-        })
+        # Usar camera_input de Streamlit (más simple y compatible)
+        foto_camara = st.camera_input("Toma una foto del código QR")
         
-        # Crear el scanner
-        scanner = QRCodeScanner()
-        
-        # Stream de video
-        ctx = webrtc_streamer(
-            key="qr-scanner",
-            video_transformer_factory=lambda: scanner,
-            rtc_configuration=rtc_config,
-            media_stream_constraints={
-                "video": {
-                    "width": {"ideal": 640},
-                    "height": {"ideal": 480}
-                },
-                "audio": False
-            }
-        )
-        
-        # Mostrar resultado cuando se detecta QR
-        if ctx.video_transformer:
-            if ctx.video_transformer.qr_detected and ctx.video_transformer.qr_data:
-                st.success("✅ ¡Código QR detectado!")
-                st.markdown("### Código escaneado:")
-                st.code(ctx.video_transformer.qr_data)
+        if foto_camara is not None:
+            # Procesar imagen de la cámara
+            imagen = Image.open(foto_camara)
+            
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.image(imagen, caption="Foto tomada", use_column_width=True)
+            
+            with col2:
+                st.write("**Procesando imagen...**")
                 
-                # Botón para copiar al portapapeles
-                if st.button("📋 Copiar Código"):
-                    st.write("Código copiado al portapapeles")
+                # Convertir imagen para procesamiento
+                imagen_array = np.array(imagen)
                 
-                # Reiniciar para escanear otro
-                if st.button("🔄 Escanear Otro"):
-                    ctx.video_transformer.qr_detected = False
-                    ctx.video_transformer.qr_data = None
-                    st.rerun()
+                # Decodificar QR
+                resultados = decodificar_qr_imagen(imagen_array)
+                
+                if resultados:
+                    st.success(f"✅ Se encontraron {len(resultados)} código(s) QR")
+                    
+                    for i, codigo in enumerate(resultados):
+                        st.markdown(f"### QR {i+1}:")
+                        st.code(codigo)
+                        
+                        # Mostrar el código de forma destacada
+                        st.markdown(f"**Código detectado:** `{codigo}`")
+                        
+                        # Botón para copiar
+                        if st.button(f"📋 Copiar código {i+1}", key=f"copy_{i}"):
+                            st.success("Código copiado!")
+                        
+                else:
+                    st.error("❌ No se detectaron códigos QR en la imagen")
+                    st.info("Toma otra foto asegurándote de que el código QR esté claro y centrado")
         
-        # Instrucciones
+        # Instrucciones para la cámara
         st.markdown("""
         **Instrucciones:**
-        1. Haz clic en "START" para activar la cámara
+        1. Haz clic en "Take Photo" para activar la cámara
         2. Apunta la cámara hacia el código QR
-        3. Mantén el código centrado y enfocado
-        4. El código se detectará automáticamente
+        3. Asegúrate de que el código esté centrado y enfocado
+        4. Toma la foto haciendo clic en el botón de captura
         """)
     
     with tab2:
@@ -157,24 +124,28 @@ def mostrar_escaner_qr():
                         # Mostrar el código de forma destacada
                         st.markdown(f"**Código detectado:** `{codigo}`")
                         
+                        # Botón para copiar
+                        if st.button(f"📋 Copiar código {i+1}", key=f"upload_copy_{i}"):
+                            st.success("Código copiado!")
+                        
                 else:
                     st.error("❌ No se detectaron códigos QR en la imagen")
                     st.info("Asegúrate de que la imagen contenga un código QR claro y legible")
     
     # Información adicional
-    with st.expander("ℹ️ Información y Solución de Problemas"):
+    with st.expander("ℹ️ Consejos para mejores resultados"):
         st.markdown("""
-        **Si la cámara no funciona:**
-        - Asegúrate de dar permisos de cámara al navegador
-        - Verifica que no haya otras aplicaciones usando la cámara
-        - Usa HTTPS (no HTTP) para acceder a la aplicación
-        - Algunos navegadores requieren configuración adicional
-        
-        **Para mejores resultados:**
+        **Para obtener mejores resultados:**
         - Mantén el código QR bien iluminado
         - Evita reflejos y sombras
-        - Mantén una distancia adecuada (15-30 cm)
-        - Mantén la cámara estable
+        - Asegúrate de que el código esté completo en la imagen
+        - Mantén una distancia adecuada (el código debe ser legible)
+        - Usa imágenes de buena calidad
+        
+        **Formatos soportados:**
+        - PNG
+        - JPG / JPEG
+        - Funciona con códigos QR estándar
         """)
 
 if __name__ == "__main__":
