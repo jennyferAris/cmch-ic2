@@ -93,32 +93,48 @@ def mostrar_login():
                     help="Haz clic para iniciar sesión con tu cuenta de Google"):
             st.login("google")
     
+# Usando containers de Streamlit con estilos más simples
 st.markdown("""
-    <div style="text-align: center; margin-top: 50px; padding: 20px; 
-                background-color: #8B0000; border-radius: 10px;">
-        <h4 style="color: #FFD700;">🔧 Funciones Principales</h4>
-        <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 20px;">
-            <div style="background: #FFD700; color: #8B0000; padding: 15px; border-radius: 8px; min-width: 200px; 
-                        border: 2px solid #B8860B; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                <strong>⚙️ Mantenimientos</strong><br>
-                <small>Preventivos y correctivos</small>
-            </div>
-            <div style="background: #FFD700; color: #8B0000; padding: 15px; border-radius: 8px; min-width: 200px;
-                        border: 2px solid #B8860B; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                <strong>📦 Inventario</strong><br>
-                <small>Control de equipos médicos</small>
-            </div>
-            <div style="background: #FFD700; color: #8B0000; padding: 15px; border-radius: 8px; min-width: 200px;
-                        border: 2px solid #B8860B; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                <strong>📱 Códigos QR</strong><br>
-                <small>Identificación y reportes</small>
-            </div>
-            <div style="background: #FFD700; color: #8B0000; padding: 15px; border-radius: 8px; min-width: 200px;
-                        border: 2px solid #B8860B; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-                <strong>📊 Reportes</strong><br>
-                <small>Análisis y KPIs</small>
-            </div>
-        </div>
+<div style="background-color: #DC143C; padding: 30px; border-radius: 15px; margin: 20px 0;">
+    <h3 style="text-align: center; color: #FFD700; margin-bottom: 30px;">🔧 Funciones Principales</h3>
+</div>
+""", unsafe_allow_html=True)
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.markdown("""
+    <div style="background-color: #FFD700; color: #8B0000; padding: 20px; 
+                border-radius: 12px; text-align: center; border: 2px solid #B8860B;">
+        <h4>⚙️ Mantenimientos</h4>
+        <p>Preventivos y correctivos</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("""
+    <div style="background-color: #FFD700; color: #8B0000; padding: 20px; 
+                border-radius: 12px; text-align: center; border: 2px solid #B8860B;">
+        <h4>📦 Inventario</h4>
+        <p>Control de equipos médicos</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown("""
+    <div style="background-color: #FFD700; color: #8B0000; padding: 20px; 
+                border-radius: 12px; text-align: center; border: 2px solid #B8860B;">
+        <h4>📱 Códigos QR</h4>
+        <p>Identificación y reportes</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    st.markdown("""
+    <div style="background-color: #FFD700; color: #8B0000; padding: 20px; 
+                border-radius: 12px; text-align: center; border: 2px solid #B8860B;">
+        <h4>📊 Reportes</h4>
+        <p>Análisis y KPIs</p>
     </div>
     """, unsafe_allow_html=True)
 
