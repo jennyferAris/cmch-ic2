@@ -28,7 +28,9 @@ def obtener_info_rol(email, roles_data):
 def mostrar_login():
     st.markdown("""
     <div style="text-align: center; padding: 50px;">
-        <h1>🏥 PLATAFORMA DE INGENIERÍA CLÍNICA</h1>
+        <h1>🏥 PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA</h1>
+        <h2>Clínica Médica Cayetano Heredia</h2>
+        <br>
         <h3>Sistema de Inventario de Equipos Médicos</h3>
         <br>
         <p style="font-size: 18px; color: #666;">
@@ -67,7 +69,7 @@ if not st.user.is_logged_in:
 roles_data = cargar_roles()
 
 # El resto del código se ejecuta solo si el usuario está logueado
-st.title("PLATAFORMA DE INGENIERÍA CLÍNICA")
+st.title("PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA")
 
 email = st.user.email
 name = st.user.name
