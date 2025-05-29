@@ -93,24 +93,28 @@ def mostrar_login():
                     help="Haz clic para iniciar sesión con tu cuenta de Google"):
             st.login("google")
     
-    st.markdown("""
+st.markdown("""
     <div style="text-align: center; margin-top: 50px; padding: 20px; 
-                background-color: #951630; border-radius: 10px;">
-        <h4>🔧 Funciones Principales</h4>
+                background-color: #8B0000; border-radius: 10px;">
+        <h4 style="color: #FFD700;">🔧 Funciones Principales</h4>
         <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 20px;">
-            <div style="background: red; padding: 15px; border-radius: 8px; min-width: 200px;">
+            <div style="background: #FFD700; color: #8B0000; padding: 15px; border-radius: 8px; min-width: 200px; 
+                        border: 2px solid #B8860B; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                 <strong>⚙️ Mantenimientos</strong><br>
                 <small>Preventivos y correctivos</small>
             </div>
-            <div style="background: red; padding: 15px; border-radius: 8px; min-width: 200px;">
+            <div style="background: #FFD700; color: #8B0000; padding: 15px; border-radius: 8px; min-width: 200px;
+                        border: 2px solid #B8860B; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                 <strong>📦 Inventario</strong><br>
                 <small>Control de equipos médicos</small>
             </div>
-            <div style="background: red; padding: 15px; border-radius: 8px; min-width: 200px;">
+            <div style="background: #FFD700; color: #8B0000; padding: 15px; border-radius: 8px; min-width: 200px;
+                        border: 2px solid #B8860B; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                 <strong>📱 Códigos QR</strong><br>
                 <small>Identificación y reportes</small>
             </div>
-            <div style="background: red; padding: 15px; border-radius: 8px; min-width: 200px;">
+            <div style="background: #FFD700; color: #8B0000; padding: 15px; border-radius: 8px; min-width: 200px;
+                        border: 2px solid #B8860B; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                 <strong>📊 Reportes</strong><br>
                 <small>Análisis y KPIs</small>
             </div>
