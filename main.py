@@ -11,9 +11,17 @@ ROLES = json.loads(roles_data)
 st.set_page_config(page_title="Sistema de Inventario", layout="wide")
 st.title("PLATAFORMA DE INGENIERÍA CLÍNICA")
 
-# Autenticación simple con botón "Ingresar"
+# Inicializar variable en session_state para el email input
+if "input_email" not in st.session_state:
+    st.session_state["input_email"] = ""
+
 if not st.session_state.get("user_authenticated", False):
-    email_input = st.text_input("Ingresa tu correo institucional para autenticar")
+    # input con clave en session_state para que mantenga valor
+    email_input = st.text_input(
+        "Ingresa tu correo institucional para autenticar", 
+        value=st.session_state["input_email"],
+        key="input_email"
+    )
     login_clicked = st.button("Ingresar")
     
     if login_clicked:
