@@ -12,5 +12,7 @@ Pillow
 google-api-python-client
 authlib.integrations.streamlit_client
 requests
+authlib>=1.2.1
+
 
 
