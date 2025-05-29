@@ -217,6 +217,7 @@ with st.sidebar:
             "nav-link-selected": {"background-color": "#DC143C"},
         }
     )
+
 # Contenido principal según la selección del menú
 if menu == "Inicio":
     st.markdown(f"## 🎯 Bienvenido, {rol_nombre}")
@@ -236,6 +237,7 @@ if menu == "Inicio":
             st.metric("🔧 Mantenimientos", "12 programados", "Esta semana")
         with col5:
             if st.button("📱 Escáner QR", type="primary", use_container_width=True):
+                st.info("Redirigiendo al escáner QR...")
         
     elif rol_nivel == 4:  # Ingeniero Junior
         st.info("👨‍🔧 Gestiona mantenimientos y supervisa las operaciones técnicas del departamento.")
@@ -263,7 +265,7 @@ if menu == "Inicio":
         col1, col2 = st.columns(2)
         with col1:
             if st.button("📱 Escáner QR", type="primary", use_container_width=True):
-                st.info("Módulo de escáner QR en desarrollo")
+                st.info("Redirigiendo al escáner QR...")
         with col2:
             if st.button("📝 Reportar Evento", type="secondary", use_container_width=True):
                 st.info("Módulo de reportes en desarrollo")
@@ -307,7 +309,13 @@ elif menu == "Inventario":
     st.title("📦 Control de Inventario")
     st.info("📋 Módulo en desarrollo - Gestión de inventario de equipos médicos")
 
-elif menu == "Escáner QR" and rol_nivel in [4, 5, 6]:  # ← MODIFICADO
+elif menu == "Escáner QR" and rol_nivel in [4, 5, 6]:
+    # Pasar información del rol al escáner
+    if 'rol_nivel' not in st.session_state:
+        st.session_state.rol_nivel = rol_nivel
+    if 'rol_nombre' not in st.session_state:
+        st.session_state.rol_nombre = rol_nombre
+    
     mostrar_escaner_qr()
 
 elif menu == "Reportar Evento" and rol_nivel == 6:
