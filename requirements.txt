@@ -10,4 +10,6 @@ streamlit_oauth
 qrcode
 Pillow
 google-api-python-client
+authlib.integrations.streamlit_client
+
 

@@ -1,100 +1,92 @@
 import streamlit as st
-from authlib.integrations.requests_client import OAuth2Session
-import requests
+from streamlit_option_menu import option_menu
+from base_datos import mostrar_base_datos
 import json
+from authlib.integrations.streamlit_client import StreamlitOAuth2App
+import requests
 
-# --- Configuración desde secrets.toml ---
-CLIENT_ID = st.secrets["auth.google"]["client_id"]
-CLIENT_SECRET = st.secrets["auth.google"]["client_secret"]
-REDIRECT_URI = st.secrets["auth"]["redirect_uri"]
-DISCOVERY_URL = st.secrets["auth.google"]["server_metadata_url"]
-ROLES = json.loads(st.secrets["roles_autorizados"]["data"])
+# Cargar roles autorizados desde secrets
+roles_json = st.secrets["roles_autorizados"]["data"]
+ROLES = json.loads(roles_json)
 
-# Obtener endpoints de Google
-@st.cache_data(show_spinner=False)
-def get_google_provider_cfg():
-    return requests.get(DISCOVERY_URL).json()
+# Config OAuth desde secrets
+auth_config = st.secrets["auth"]
+google_config = st.secrets["auth.google"]
 
-provider_cfg = get_google_provider_cfg()
-authorization_endpoint = provider_cfg["authorization_endpoint"]
-token_endpoint = provider_cfg["token_endpoint"]
-userinfo_endpoint = provider_cfg["userinfo_endpoint"]
+# Inicializamos cliente OAuth2 con la configuración de Google
+oauth_app = StreamlitOAuth2App(
+    client_id=google_config["client_id"],
+    client_secret=google_config["client_secret"],
+    server_metadata_url=google_config["server_metadata_url"],
+    redirect_uri=auth_config["redirect_uri"],
+    scope="openid email profile",
+)
+
+st.set_page_config(page_title="Sistema de Inventario", layout="wide")
 
 def login():
-    oauth = OAuth2Session(
-        CLIENT_ID,
-        CLIENT_SECRET,
-        scope="openid email profile",
-        redirect_uri=REDIRECT_URI,
-    )
-    authorization_url, state = oauth.create_authorization_url(authorization_endpoint)
-    st.session_state["oauth_state"] = state
-    st.experimental_set_query_params()  # limpiar params
-    st.markdown(f"""
-        <a href="{authorization_url}" style="text-decoration:none;">
-        <button style="
-            padding:10px 20px; font-size:16px; background-color:#4285F4; color:white;
-            border:none; border-radius:5px; cursor:pointer;">
-            Ingresar con Google
-        </button>
-        </a>
-    """, unsafe_allow_html=True)
+    st.title("🔐 Login")
+    if st.button("Iniciar sesión con Google"):
+        oauth_app.authorize_redirect()
 
-def fetch_token(code):
-    oauth = OAuth2Session(
-        CLIENT_ID,
-        CLIENT_SECRET,
-        redirect_uri=REDIRECT_URI,
-        state=st.session_state.get("oauth_state"),
-    )
-    token = oauth.fetch_token(token_endpoint, code=code)
-    return token
+def logout():
+    st.session_state.clear()
+    st.experimental_rerun()
 
-def get_userinfo(token):
-    oauth = OAuth2Session(CLIENT_ID, CLIENT_SECRET, token=token)
-    resp = oauth.get(userinfo_endpoint)
-    resp.raise_for_status()
-    return resp.json()
-
-def main():
-    st.title("Sistema de Login Google - CMCH IC2")
-
-    # Si ya autenticado, mostrar info y rol
-    if "user" in st.session_state:
-        user = st.session_state["user"]
-        email = user.get("email")
-        st.success(f"¡Bienvenido {email}!")
-        # Mostrar rol si autorizado
-        if email in ROLES:
-            rol_name, rol_id = ROLES[email]
-            st.info(f"Tu rol es: **{rol_name}** (ID: {rol_id})")
-        else:
-            st.warning("No tienes un rol asignado en el sistema.")
-
-        if st.button("Cerrar sesión"):
-            st.session_state.pop("user")
-            st.experimental_rerun()
-
-        # Aquí iría el resto de tu app con acceso autorizado
-        st.write("Contenido protegido para usuarios autenticados...")
-
-    else:
-        # Revisar si viene el código OAuth en la URL
-        query_params = st.experimental_get_query_params()
-        if "code" in query_params:
-            code = query_params["code"][0]
-            try:
-                token = fetch_token(code)
-                userinfo = get_userinfo(token)
-                st.session_state["user"] = userinfo
-                st.experimental_set_query_params()  # limpiar URL
+if "user" not in st.session_state:
+    # Intentamos obtener token e info si el usuario viene de autorización
+    token = oauth_app.authorize_access_token()
+    if token:
+        user_info = oauth_app.parse_id_token(token)
+        if user_info:
+            email = user_info["email"]
+            if email in ROLES:
+                st.session_state["user"] = user_info
                 st.experimental_rerun()
-            except Exception as e:
-                st.error(f"Error en autenticación: {e}")
+            else:
+                st.error("🚫 Acceso denegado. Tu cuenta no está autorizada.")
+                st.stop()
         else:
-            login()
+            st.error("No se pudo obtener información del usuario.")
+            st.stop()
+    else:
+        login()
+else:
+    user = st.session_state["user"]
+    email = user["email"]
+    name = user.get("name", "Usuario")
+    picture = user.get("picture")
+    role = ROLES.get(email, ["Invitado", 0])[0]
 
-if __name__ == "__main__":
-    if "oauth_state" not in st.session_state:
-        st.session_state["oauth_state"] = None
-    main()
+    st.title("PLATAFORMA DE INGENIERÍA CLÍNICA")
+
+    with st.sidebar:
+        st.markdown(f"👤 **{name}**\n📧 {email}\n🛡️ Rol: `{role}`")
+        menu = option_menu(
+            menu_title="Menú Principal",
+            options=["Inicio", "Ver Base de Datos", "Perfil", "Configuración"],
+            icons=["house", "database", "person", "gear"],
+            default_index=0
+        )
+        if st.button("Cerrar sesión"):
+            logout()
+
+    if menu == "Inicio":
+        st.title("🏥 Bienvenido al Sistema de Inventario")
+        st.write("Navega usando el menú lateral para ver y gestionar los equipos médicos.")
+
+    elif menu == "Ver Base de Datos":
+        mostrar_base_datos()
+
+    elif menu == "Perfil":
+        st.title("👤 Perfil del Usuario")
+        if picture:
+            st.image(picture)
+        st.write(f"Nombre: {name}")
+        st.write(f"Correo: {email}")
+        st.write(f"Rol: {role}")
+        st.json(user)
+
+    elif menu == "Configuración":
+        st.title("⚙️ Configuración")
+        st.write("Aquí irán las opciones de configuración personalizadas.")
