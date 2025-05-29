@@ -13,7 +13,7 @@ requests
 authlib>=1.2.1
 pyzbar
 numpy
-opencv-python
+opencv-python-headless
 json
 streamlit-webrtc
 
