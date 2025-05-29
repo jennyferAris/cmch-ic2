@@ -2,55 +2,73 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 from base_datos import mostrar_base_datos
 import json
-from authlib.integrations.streamlit_client import StreamlitOAuth2App
-import requests
+from authlib.integrations.requests_client import OAuth2Session
+import urllib.parse
 
-# Cargar roles autorizados desde secrets
+# Configuración desde secrets
 roles_json = st.secrets["roles_autorizados"]["data"]
 ROLES = json.loads(roles_json)
 
-# Config OAuth desde secrets
 auth_config = st.secrets["auth"]
 google_config = st.secrets["auth.google"]
 
-# Inicializamos cliente OAuth2 con la configuración de Google
-oauth_app = StreamlitOAuth2App(
-    client_id=google_config["client_id"],
-    client_secret=google_config["client_secret"],
-    server_metadata_url=google_config["server_metadata_url"],
-    redirect_uri=auth_config["redirect_uri"],
-    scope="openid email profile",
-)
+# Parámetros OAuth
+client_id = google_config["client_id"]
+client_secret = google_config["client_secret"]
+redirect_uri = auth_config["redirect_uri"]
+server_metadata_url = google_config["server_metadata_url"]
+
+# Obtener metadata de Google (endpoints)
+import requests
+
+metadata = requests.get(server_metadata_url).json()
+authorization_endpoint = metadata["authorization_endpoint"]
+token_endpoint = metadata["token_endpoint"]
+userinfo_endpoint = metadata["userinfo_endpoint"]
+
+def get_authorization_url(state):
+    oauth = OAuth2Session(client_id, client_secret, scope="openid email profile", redirect_uri=redirect_uri)
+    uri, _ = oauth.create_authorization_url(authorization_endpoint, state=state, prompt="select_account")
+    return uri
+
+def get_token(code):
+    oauth = OAuth2Session(client_id, client_secret, scope="openid email profile", redirect_uri=redirect_uri)
+    token = oauth.fetch_token(token_endpoint, code=code)
+    return token
+
+def get_userinfo(token):
+    oauth = OAuth2Session(client_id, client_secret, token=token)
+    resp = oauth.get(userinfo_endpoint)
+    return resp.json()
 
 st.set_page_config(page_title="Sistema de Inventario", layout="wide")
 
-def login():
-    st.title("🔐 Login")
-    if st.button("Iniciar sesión con Google"):
-        oauth_app.authorize_redirect()
-
-def logout():
-    st.session_state.clear()
-    st.experimental_rerun()
+# Paso 1: Leer query params para detectar código OAuth2
+query_params = st.experimental_get_query_params()
+if "code" in query_params:
+    code = query_params["code"][0]
+    # Intercambiar código por token
+    token = get_token(code)
+    # Obtener info usuario
+    userinfo = get_userinfo(token)
+    email = userinfo.get("email")
+    if email in ROLES:
+        st.session_state["user"] = userinfo
+        # Limpiar URL para que no repita el código
+        st.experimental_set_query_params()
+        st.experimental_rerun()
+    else:
+        st.error("🚫 Acceso denegado. Tu cuenta no está autorizada.")
+        st.stop()
 
 if "user" not in st.session_state:
-    # Intentamos obtener token e info si el usuario viene de autorización
-    token = oauth_app.authorize_access_token()
-    if token:
-        user_info = oauth_app.parse_id_token(token)
-        if user_info:
-            email = user_info["email"]
-            if email in ROLES:
-                st.session_state["user"] = user_info
-                st.experimental_rerun()
-            else:
-                st.error("🚫 Acceso denegado. Tu cuenta no está autorizada.")
-                st.stop()
-        else:
-            st.error("No se pudo obtener información del usuario.")
-            st.stop()
-    else:
-        login()
+    st.title("🔐 Login")
+    if st.button("Iniciar sesión con Google"):
+        # Generar URL autorización y redirigir (abrir en nueva ventana)
+        import uuid
+        state = str(uuid.uuid4())
+        auth_url = get_authorization_url(state)
+        st.markdown(f"[Haz clic aquí para iniciar sesión]({auth_url})", unsafe_allow_html=True)
 else:
     user = st.session_state["user"]
     email = user["email"]
@@ -69,7 +87,8 @@ else:
             default_index=0
         )
         if st.button("Cerrar sesión"):
-            logout()
+            st.session_state.clear()
+            st.experimental_rerun()
 
     if menu == "Inicio":
         st.title("🏥 Bienvenido al Sistema de Inventario")
