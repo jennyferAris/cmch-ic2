@@ -31,10 +31,8 @@ def mostrar_login():
         <h1>🏥 PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA</h1>
         <h2>Clínica Médica Cayetano Heredia</h2>
         <br>
-        <h3>Sistema de Inventario de Equipos Médicos</h3>
-        <br>
         <p style="font-size: 18px; color: #666;">
-            Bienvenido al sistema de gestión de inventario médico.<br>
+            Bienvenido al sistema de gestión del departamento de Ingeniería Clínica.<br>
             Para continuar, inicia sesión con tu cuenta autorizada.
         </p>
     </div>
