@@ -11,26 +11,34 @@ ROLES = json.loads(roles_data)
 st.set_page_config(page_title="Sistema de Inventario", layout="wide")
 st.title("PLATAFORMA DE INGENIERÍA CLÍNICA")
 
-# Inicializar variable en session_state para el email input
+# Inicializar variables en session_state
 if "input_email" not in st.session_state:
     st.session_state["input_email"] = ""
+if "login_attempt" not in st.session_state:
+    st.session_state["login_attempt"] = False
+
+def login():
+    st.session_state["login_attempt"] = True
 
 if not st.session_state.get("user_authenticated", False):
-    # input con clave en session_state para que mantenga valor
     email_input = st.text_input(
         "Ingresa tu correo institucional para autenticar", 
-        value=st.session_state["input_email"],
+        value=st.session_state["input_email"], 
         key="input_email"
     )
-    login_clicked = st.button("Ingresar")
-    
-    if login_clicked:
-        if email_input in ROLES:
+    st.button("Ingresar", on_click=login)
+
+    if st.session_state["login_attempt"]:
+        # Cuando el botón es presionado, valida el email
+        if st.session_state["input_email"] in ROLES:
             st.session_state["user_authenticated"] = True
-            st.session_state["email"] = email_input
+            st.session_state["email"] = st.session_state["input_email"]
+            st.session_state["login_attempt"] = False
             st.experimental_rerun()  # recarga la app para reflejar el login
         else:
             st.error("Correo no autorizado")
+            st.session_state["login_attempt"] = False
+
     st.stop()
 
 email = st.session_state["email"]
