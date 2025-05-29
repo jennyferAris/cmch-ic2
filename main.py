@@ -40,9 +40,9 @@ def obtener_menus_por_rol(nivel):
     elif nivel == 3:  # Practicante Preprofesional
         return menus_base + ["Supervisión", "Mantenimientos", "Pasantes"]
     elif nivel == 4:  # Ingeniero Junior
-        return menus_base + ["Mantenimientos", "Supervisión", "Reportes"]
+        return menus_base + ["Mantenimientos", "Supervisión", "Reportes", "Escáner QR"]  # ← AGREGADO
     elif nivel == 5:  # Ingeniero Clínico (Jefe)
-        return menus_base + ["Dashboard KPIs", "Generador QR", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Cronograma"]
+        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Cronograma"]  # ← AGREGADO
     elif nivel == 6:  # Personal de Salud
         return ["Escáner QR", "Reportar Evento", "Mis Reportes"]
     else:
@@ -225,7 +225,7 @@ if menu == "Inicio":
     if rol_nivel == 5:  # Ingeniero Clínico
         st.success("👨‍💼 Acceso completo al sistema como Jefe del Departamento de Ingeniería Clínica.")
         
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
             st.metric("📊 KPIs", "Dashboard", "Activo")
         with col2:
@@ -234,7 +234,9 @@ if menu == "Inicio":
             st.metric("⚙️ Equipos", "150", "3 nuevos")
         with col4:
             st.metric("🔧 Mantenimientos", "12 programados", "Esta semana")
-            
+        with col5:
+            if st.button("📱 Escáner QR", type="primary", use_container_width=True):
+        
     elif rol_nivel == 4:  # Ingeniero Junior
         st.info("👨‍🔧 Gestiona mantenimientos y supervisa las operaciones técnicas del departamento.")
         
@@ -305,11 +307,8 @@ elif menu == "Inventario":
     st.title("📦 Control de Inventario")
     st.info("📋 Módulo en desarrollo - Gestión de inventario de equipos médicos")
 
-elif menu == "Escáner QR" and rol_nivel == 6:
-    st.title("📱 Escáner de Códigos QR")
-    st.info("📷 Módulo en desarrollo - Escáner para identificación de equipos")
+elif menu == "Escáner QR" and rol_nivel in [4, 5, 6]:  # ← MODIFICADO
     mostrar_escaner_qr()
-
 
 elif menu == "Reportar Evento" and rol_nivel == 6:
     st.title("📝 Reportar Evento")
