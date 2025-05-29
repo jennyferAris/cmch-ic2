@@ -70,15 +70,26 @@ def obtener_iconos_menu(menus):
     }
     return [iconos.get(menu, "circle") for menu in menus]
 
+
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    st.markdown("# 🏥 PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA")
-    st.markdown("### Sistema de Gestión de Equipos Médicos")
-    st.write("")
-    st.write("Sistema integral para mantenimiento preventivo, inventario y gestión técnica.")
-    st.write("Para continuar, inicia sesión con tu cuenta autorizada.")
+    # Centrar todo el contenido del login
+    st.markdown("""
+    <div style="text-align: center; padding: 50px 20px;">
+        <h1>🏥 PLATAFORMA DEL DEPARTAMENTO DE INGENIERÍA CLÍNICA</h1>
+        <h3>Sistema de Gestión de Equipos Médicos</h3>
+        <br>
+        <p style="font-size: 18px; color: #666; max-width: 600px; margin: 0 auto;">
+            Sistema integral para mantenimiento preventivo, inventario y gestión técnica.<br>
+            Para continuar, inicia sesión con tu cuenta autorizada.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Espacio adicional
     st.write("")
     
+    # Centrar el botón de login
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
