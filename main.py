@@ -16,29 +16,39 @@ if "input_email" not in st.session_state:
     st.session_state["input_email"] = ""
 if "login_attempt" not in st.session_state:
     st.session_state["login_attempt"] = False
+if "user_authenticated" not in st.session_state:
+    st.session_state["user_authenticated"] = False
+if "reload_trigger" not in st.session_state:
+    st.session_state["reload_trigger"] = False
 
 def login():
     st.session_state["login_attempt"] = True
 
-if not st.session_state.get("user_authenticated", False):
+def logout():
+    st.session_state.clear()
+    st.session_state["reload_trigger"] = not st.session_state.get("reload_trigger", False)
+
+# Si no está autenticado, mostrar login
+if not st.session_state["user_authenticated"]:
     email_input = st.text_input(
-        "Ingresa tu correo institucional para autenticar", 
-        value=st.session_state["input_email"], 
+        "Ingresa tu correo institucional para autenticar",
+        value=st.session_state["input_email"],
         key="input_email"
     )
-    st.button("Ingresar", on_click=login)
+    if st.button("Ingresar"):
+        login()
 
     if st.session_state["login_attempt"]:
-        # Cuando el botón es presionado, valida el email
         if st.session_state["input_email"] in ROLES:
             st.session_state["user_authenticated"] = True
             st.session_state["email"] = st.session_state["input_email"]
             st.session_state["login_attempt"] = False
-            st.experimental_rerun()  # recarga la app para reflejar el login
+            # Toggle para forzar recarga sin experimental_rerun
+            st.session_state["reload_trigger"] = not st.session_state["reload_trigger"]
+            st.experimental_rerun()
         else:
             st.error("Correo no autorizado")
             st.session_state["login_attempt"] = False
-
     st.stop()
 
 email = st.session_state["email"]
@@ -50,7 +60,6 @@ if rol_info is None:
 
 role, rol_nivel = rol_info
 
-# Sidebar con menú
 with st.sidebar:
     st.markdown(f"👤 **{email}**\n🛡️ Rol: `{role}`")
     menu = option_menu(
@@ -60,7 +69,7 @@ with st.sidebar:
         default_index=0
     )
     if st.button("Cerrar sesión"):
-        st.session_state.clear()
+        logout()
         st.experimental_rerun()
 
 # Sección inicio
@@ -101,4 +110,3 @@ elif menu == "Perfil":
 elif menu == "Configuración":
     st.title("⚙️ Configuración")
     st.write("Aquí irán las opciones de configuración personalizadas.")
-
