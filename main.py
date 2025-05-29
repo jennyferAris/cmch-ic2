@@ -3,6 +3,7 @@ from streamlit_option_menu import option_menu
 from base_datos import mostrar_base_datos
 from generar_qr import generar_qrs  # ← Nueva importación
 import json
+from escanear_qr import mostrar_escaner_qr
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
@@ -307,6 +308,8 @@ elif menu == "Inventario":
 elif menu == "Escáner QR" and rol_nivel == 6:
     st.title("📱 Escáner de Códigos QR")
     st.info("📷 Módulo en desarrollo - Escáner para identificación de equipos")
+    mostrar_escaner_qr()
+
 
 elif menu == "Reportar Evento" and rol_nivel == 6:
     st.title("📝 Reportar Evento")
