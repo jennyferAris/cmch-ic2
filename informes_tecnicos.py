@@ -390,7 +390,7 @@ def subir_informe_drive(pdf_buffer, nombre_archivo, técnico_info):
 def mostrar_informes_tecnicos():
     """Función principal para mostrar la interfaz de informes técnicos"""
     st.title("📋 Generador de Informes Técnicos")
-    st.markdown("*Genera informes técnicos siguiendo el formato oficial del Hospital Nacional Cayetano Heredia*")
+    st.markdown("*Genera informes técnicos siguiendo el formato oficial de la Clínica Médica Cayetano Heredia*")
     
     # Obtener información del técnico desde session_state
     técnico_info = {
