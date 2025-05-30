@@ -300,8 +300,7 @@ elif menu == "Informes Técnicos":
         st.session_state.rol_nombre = rol_nombre
     if 'email' not in st.session_state:
         st.session_state.email = email
-    
-    mostrar_informes_tecnicos()
+    subir_informe_drive()
 
 elif menu == "Asignación Tareas" and rol_nivel >= 5:
     st.title("📋 Asignación de Tareas")
