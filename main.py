@@ -7,6 +7,7 @@ from escanear_qr import mostrar_escaner_qr
 from informes_tecnicos import mostrar_informes_tecnicos 
 from asignacion_tareas import mostrar_modulo_asignacion 
 from gestion_usuarios import mostrar_modulo_gestion_usuarios
+from dashboard_kpis import mostrar_modulo_dashboard
 
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
@@ -287,8 +288,7 @@ elif menu == "Base de Datos":
     mostrar_base_datos()
 
 elif menu == "Dashboard KPIs" and rol_nivel >= 5:
-    st.title("📊 Dashboard de KPIs")
-    st.info("📈 Módulo en desarrollo - Métricas y indicadores del departamento")
+    mostrar_modulo_dashboard()
 
 # Generador QR
 elif menu == "Generador QR" and rol_nivel >= 5:
