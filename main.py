@@ -6,6 +6,8 @@ import json
 from escanear_qr import mostrar_escaner_qr
 from informes_tecnicos import mostrar_informes_tecnicos 
 from asignacion_tareas import mostrar_modulo_asignacion 
+from gestion_usuarios import mostrar_modulo_gestion_usuarios
+
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
@@ -316,8 +318,7 @@ elif menu == "Asignación Tareas" and rol_nivel >= 2:
 
 
 elif menu == "Gestión Usuarios" and rol_nivel >= 5:
-    st.title("👥 Gestión de Usuarios")
-    st.info("👤 Módulo en desarrollo - Administración de usuarios y roles")
+    mostrar_modulo_gestion_usuarios()
 
 elif menu == "Cronograma" and rol_nivel >= 5:
     st.title("📅 Cronograma de Mantenimientos")
