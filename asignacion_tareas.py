@@ -57,23 +57,27 @@ def obtener_pasantes_disponibles(nivel_asignador):
 
 @st.cache_data(ttl=300)  # Cache por 5 minutos
 def cargar_equipos_base_datos():
-    """Carga los equipos desde la hoja de base de datos con las columnas exactas"""
+    """Carga los equipos desde la hoja de base de datos con las columnas exactas de tu Excel"""
     try:
         # Abrir la hoja de base de datos
         hoja_base = cliente.open_by_key(BASE_DATOS_SHEET_ID).sheet1
         datos = hoja_base.get_all_records()
         
+        # Debug: mostrar las primeras columnas para verificar nombres
+        if datos:
+            st.info(f"🔍 Columnas encontradas: {list(datos[0].keys())}")
+        
         equipos = []
         for fila in datos:
-            # Usar las columnas EXACTAS de tu base de datos
+            # Usar las columnas EXACTAS de tu base de datos según tu imagen
             equipo_info = {
-                'numero_equipo': str(fila.get('Codigo nuevo', '')).strip(),
-                'numero_serie': str(fila.get('SERIE', '')).strip(),
-                'nombre_equipo': str(fila.get('EQUIPO', '')).strip(),
-                'area': str(fila.get('AMBIENTE', '')).strip(),
-                'ubicacion': str(fila.get('SEDE', '')).strip(),
-                'marca': str(fila.get('MARCA', '')).strip(),
-                'modelo': str(fila.get('MODELO', '')).strip()
+                'numero_equipo': str(fila.get('Codigo nuevo', '')).strip(),  # Mantengo según tu código
+                'numero_serie': str(fila.get('SERIE', '')).strip(),         # Mantengo según tu código
+                'nombre_equipo': str(fila.get('EQUIPO', '')).strip(),       # Correcto
+                'area': str(fila.get('UPSS/UPS', '')).strip(),              # Mantengo según tu código
+                'ubicacion': str(fila.get('AMBIENTE', '')).strip(),             # Mantengo según tu código
+                'marca': str(fila.get('MARCA', '')).strip(),                # Correcto
+                'modelo': str(fila.get('MODELO', '')).strip()               # Correcto
             }
             
             # Solo agregar si tiene número de equipo válido
@@ -313,15 +317,13 @@ def mostrar_asignacion_tareas():
                             nombre_equipo = equipo_data['nombre_equipo']
                             area_equipo = equipo_data['area']
                             
-                            # Mostrar detalles del equipo
+                            # ✅ CORRECCIÓN: Mostrar detalles del equipo (SIN ERRORES DE COLUMNAS)
                             with st.expander("🔍 Detalles del Equipo Seleccionado"):
-                                col_det1 = st.columns(1)
-                                with col_det1:
-                                    st.write(f"**📍 Área:** {equipo_data.get('area', 'N/A')}")
-                                    st.write(f"**📍 Ubicación:** {equipo_data.get('ubicacion', 'N/A')}")
-                                    st.write(f"**🏷️ N° Serie:** {equipo_data.get('numero_serie', 'N/A')}")
-                                    st.write(f"**🏭 Marca:** {equipo_data.get('marca', 'N/A')}")
-                                    st.write(f"**📱 Modelo:** {equipo_data.get('modelo', 'N/A')}")
+                                st.write(f"**📍 Área:** {equipo_data.get('area', 'N/A')}")
+                                st.write(f"**📍 Ubicación:** {equipo_data.get('ubicacion', 'N/A')}")
+                                st.write(f"**🏷️ N° Serie:** {equipo_data.get('numero_serie', 'N/A')}")
+                                st.write(f"**🏭 Marca:** {equipo_data.get('marca', 'N/A')}")
+                                st.write(f"**📱 Modelo:** {equipo_data.get('modelo', 'N/A')}")
                         else:
                             st.warning(f"⚠️ No se encontraron equipos en el área '{area_filtro}'.")
                     else:
