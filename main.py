@@ -318,7 +318,7 @@ elif menu == "Asignación Tareas" and rol_nivel >= 2:
     mostrar_modulo_asignacion()
 
 
-elif menu == "Gestión Usuarios" and rol_nivel >= 5:
+elif menu == "Gestión Usuarios":
     mostrar_modulo_gestion_usuarios()
 
 elif menu == "Cronograma" and rol_nivel >= 5:
