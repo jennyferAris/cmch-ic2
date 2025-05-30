@@ -153,8 +153,7 @@ def asignar_nueva_tarea(datos_tarea):
         
         hoja_tareas.append_row(nueva_fila)
         
-        # Limpiar cache para que se actualicen las tareas
-        cargar_tareas_asignadas.clear()
+        cargar_equipos_base_datos.clear()
         
         return True
         
@@ -375,7 +374,7 @@ def mostrar_asignacion_tareas():
                             st.success("✅ ¡Tarea asignada exitosamente!")
                             st.balloons()
                             # Limpiar cache
-                            st.cache_data.clear()
+                            cargar_equipos_base_datos.clear()
                             st.rerun()
                         else:
                             st.error("❌ Error al asignar la tarea. Intenta nuevamente.")
@@ -479,7 +478,7 @@ def mostrar_asignacion_tareas():
                             if st.button(f"✅ Actualizar", key=f"btn_{i}", type="secondary"):
                                 if actualizar_estado_tarea(tarea, nuevo_estado):
                                     st.success("✅ Estado actualizado exitosamente")
-                                    st.cache_data.clear()
+                                    cargar_equipos_base_datos.clear()
                                     st.rerun()
                                 else:
                                     st.error("❌ Error al actualizar el estado")
