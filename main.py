@@ -4,7 +4,7 @@ from base_datos import mostrar_base_datos
 from generar_qr import generar_qrs
 import json
 from escanear_qr import mostrar_escaner_qr
-from informes_tecnicos import mostrar_informes_tecnicos  # ← Nueva importación
+from informes_tecnicos import subir_informe_drive  # ← Nueva importación
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
