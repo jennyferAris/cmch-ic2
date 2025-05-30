@@ -17,6 +17,7 @@ google-auth-httplib2
 openpyxl
 qrcode[pil]
 reportlab>=3.6.0
+reportlab
 
 
 

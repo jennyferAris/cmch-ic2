@@ -4,7 +4,7 @@ from base_datos import mostrar_base_datos
 from generar_qr import generar_qrs
 import json
 from escanear_qr import mostrar_escaner_qr
-from informes_tecnicos import subir_informe_drive  # ← Nueva importación
+from informes_tecnicos import mostrar_informes_tecnicos # ← Nueva importación
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
@@ -300,7 +300,7 @@ elif menu == "Informes Técnicos":
         st.session_state.rol_nombre = rol_nombre
     if 'email' not in st.session_state:
         st.session_state.email = email
-    subir_informe_drive()
+    mostrar_informes_tecnicos()
 
 elif menu == "Asignación Tareas" and rol_nivel >= 5:
     st.title("📋 Asignación de Tareas")
