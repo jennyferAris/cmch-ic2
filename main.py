@@ -4,7 +4,8 @@ from base_datos import mostrar_base_datos
 from generar_qr import generar_qrs
 import json
 from escanear_qr import mostrar_escaner_qr
-from informes_tecnicos import mostrar_informes_tecnicos # ← Nueva importación
+from informes_tecnicos import mostrar_informes_tecnicos 
+from asignacion_tareas import mostrar_modulo_asignacion 
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
@@ -37,11 +38,11 @@ def obtener_menus_por_rol(nivel):
     elif nivel == 1:  # Pasante 1
         return menus_base + ["Mantenimientos", "Informes Técnicos", "Inventario"]
     elif nivel == 2:  # Pasante 2
-        return menus_base + ["Mantenimientos", "Informes Técnicos", "Gestión Pasantes", "Inventario"]
+        return menus_base + ["Mantenimientos", "Informes Técnicos", "Asignación Tareas", "Gestión Pasantes", "Inventario"]
     elif nivel == 3:  # Practicante Preprofesional
-        return menus_base + ["Supervisión", "Mantenimientos", "Informes Técnicos", "Pasantes"]
+        return menus_base + ["Supervisión", "Mantenimientos", "Informes Técnicos", "Asignación Tareas", "Pasantes"]
     elif nivel == 4:  # Ingeniero Junior
-        return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Reportes", "Escáner QR"]
+        return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Asignación Tareas", "Reportes", "Escáner QR"]
     elif nivel == 5:  # Ingeniero Clínico (Jefe)
         return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Técnicos", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Cronograma"]
     elif nivel == 6:  # Personal de Salud
@@ -302,10 +303,18 @@ elif menu == "Informes Técnicos":
         st.session_state.email = email
     mostrar_informes_tecnicos()
 
-elif menu == "Asignación Tareas" and rol_nivel >= 5:
-    st.title("📋 Asignación de Tareas")
-    st.info("📝 Módulo en desarrollo - Sistema de asignación de tareas")
+elif menu == "Asignación Tareas" and rol_nivel >= 2:
+    # Pasar información del rol al módulo
+    if 'email' not in st.session_state:
+        st.session_state.email = email
+    if 'name' not in st.session_state:
+        st.session_state.name = name
+    if 'rol_nivel' not in st.session_state:
+        st.session_state.rol_nivel = rol_nivel
     
+    mostrar_modulo_asignacion()
+
+
 elif menu == "Gestión Usuarios" and rol_nivel >= 5:
     st.title("👥 Gestión de Usuarios")
     st.info("👤 Módulo en desarrollo - Administración de usuarios y roles")
