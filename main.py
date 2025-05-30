@@ -1,9 +1,10 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 from base_datos import mostrar_base_datos
-from generar_qr import generar_qrs  # ← Nueva importación
+from generar_qr import generar_qrs
 import json
 from escanear_qr import mostrar_escaner_qr
+from informes_tecnicos import mostrar_informes_tecnicos  # ← Nueva importación
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
@@ -32,17 +33,17 @@ def obtener_menus_por_rol(nivel):
     menus_base = ["Inicio", "Base de Datos"]
     
     if nivel == 0:  # Pasante 0
-        return menus_base + ["Fichas Técnicas", "Mis Reportes"]
+        return menus_base + ["Informes Técnicos", "Fichas Técnicas", "Mis Reportes"]
     elif nivel == 1:  # Pasante 1
-        return menus_base + ["Mantenimientos", "Inventario"]
+        return menus_base + ["Mantenimientos", "Informes Técnicos", "Inventario"]
     elif nivel == 2:  # Pasante 2
-        return menus_base + ["Mantenimientos", "Gestión Pasantes", "Inventario"]
+        return menus_base + ["Mantenimientos", "Informes Técnicos", "Gestión Pasantes", "Inventario"]
     elif nivel == 3:  # Practicante Preprofesional
-        return menus_base + ["Supervisión", "Mantenimientos", "Pasantes"]
+        return menus_base + ["Supervisión", "Mantenimientos", "Informes Técnicos", "Pasantes"]
     elif nivel == 4:  # Ingeniero Junior
-        return menus_base + ["Mantenimientos", "Supervisión", "Reportes", "Escáner QR"]  # ← AGREGADO
+        return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Reportes", "Escáner QR"]
     elif nivel == 5:  # Ingeniero Clínico (Jefe)
-        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Cronograma"]  # ← AGREGADO
+        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Técnicos", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Cronograma"]
     elif nivel == 6:  # Personal de Salud
         return ["Escáner QR", "Reportar Evento", "Mis Reportes"]
     else:
@@ -63,6 +64,7 @@ def obtener_iconos_menu(menus):
         "Escáner QR": "camera",
         "Reportar Evento": "exclamation-triangle",
         "Fichas Técnicas": "file-medical",
+        "Informes Técnicos": "file-earmark-pdf",  # ← NUEVO ICONO
         "Mantenimientos": "tools",
         "Inventario": "box-seam",
         "Gestión Pasantes": "person-badge",
@@ -285,9 +287,21 @@ elif menu == "Dashboard KPIs" and rol_nivel >= 5:
     st.title("📊 Dashboard de KPIs")
     st.info("📈 Módulo en desarrollo - Métricas y indicadores del departamento")
 
-# ← AQUÍ ESTÁ LA INTEGRACIÓN DEL GENERADOR QR
+# Generador QR
 elif menu == "Generador QR" and rol_nivel >= 5:
-    generar_qrs()  # ← Llama a tu función del generador QR
+    generar_qrs()
+
+# ← NUEVO MÓDULO DE INFORMES TÉCNICOS
+elif menu == "Informes Técnicos":
+    # Pasar información del rol al módulo de informes
+    if 'name' not in st.session_state:
+        st.session_state.name = name
+    if 'rol_nombre' not in st.session_state:
+        st.session_state.rol_nombre = rol_nombre
+    if 'email' not in st.session_state:
+        st.session_state.email = email
+    
+    mostrar_informes_tecnicos()
 
 elif menu == "Asignación Tareas" and rol_nivel >= 5:
     st.title("📋 Asignación de Tareas")

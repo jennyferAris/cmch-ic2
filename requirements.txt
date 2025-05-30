@@ -7,12 +7,16 @@ pandas
 oauth2client
 streamlit_oauth
 qrcode
-Pillow
+pillow
 google-api-python-client
 requests
 authlib>=1.2.1
 numpy
-
+plotly
+google-auth-httplib2
+openpyxl
+qrcode[pil]
+reportlab>=3.6.0
 
 
 
