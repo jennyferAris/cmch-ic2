@@ -8,6 +8,7 @@ from informes_tecnicos import mostrar_informes_tecnicos
 from asignacion_tareas import mostrar_modulo_asignacion 
 from gestion_usuarios import mostrar_modulo_gestion_usuarios
 from dashboard_kpis import mostrar_modulo_dashboard
+from reportes import mostrar_modulo_reportes
 
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
@@ -366,8 +367,7 @@ elif menu == "Pasantes":
     st.info("📚 Módulo en desarrollo - Administración de pasantes")
 
 elif menu == "Reportes":
-    st.title("📄 Reportes del Sistema")
-    st.info("📊 Módulo en desarrollo - Generación de reportes")
+    mostrar_modulo_reportes()
 
 elif menu == "Rendimiento Equipo":
     st.title("🏆 Rendimiento del Equipo")
