@@ -37,8 +37,8 @@ def generar_datos_reporte(mes_seleccionado, ano_seleccionado):
     np.random.seed(hash(f"{mes_seleccionado}_{ano_seleccionado}") % 2**32)
     
     datos_departamento = {
-        'nombre_hospital': 'Hospital Nacional Especializado',
-        'departamento': 'Ingeniería Clínica y Bioingeniería',
+        'nombre_hospital': 'Clínica Médica Cayetano Heredia',
+        'departamento': 'Ingeniería Clínica',
         'jefe_departamento': st.session_state.get('name', 'Ing. Clínico'),
         'periodo': f"{mes_seleccionado}/{ano_seleccionado}",
         'fecha_reporte': datetime.now().strftime('%d/%m/%Y')
