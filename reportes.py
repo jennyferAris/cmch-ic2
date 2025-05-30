@@ -28,7 +28,7 @@ COLORES_REPORTE = {
 def verificar_permisos_reportes():
     """Verifica permisos para acceso a reportes"""
     nivel_usuario = st.session_state.get('rol_nivel', 0)
-    if nivel_usuario < 4:
+    if nivel_usuario < 1:
         return False
     return True
 
