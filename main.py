@@ -9,6 +9,7 @@ from asignacion_tareas import mostrar_modulo_asignacion
 from gestion_usuarios import mostrar_modulo_gestion_usuarios
 from dashboard_kpis import mostrar_modulo_dashboard
 from reportes import mostrar_modulo_reportes
+from rendimiento_equipo import mostrar_rendimiento_equipo
 
 
 st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
@@ -48,7 +49,7 @@ def obtener_menus_por_rol(nivel):
     elif nivel == 4:  # Ingeniero Junior
         return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Asignación Tareas", "Reportes", "Escáner QR"]
     elif nivel == 5:  # Ingeniero Clínico (Jefe)
-        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Técnicos", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Cronograma"]
+        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Técnicos", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo"]
     elif nivel == 6:  # Personal de Salud
         return ["Escáner QR", "Reportar Evento", "Mis Reportes"]
     else:
@@ -65,7 +66,7 @@ def obtener_iconos_menu(menus):
         "Gestión Usuarios": "people",
         "Reportes": "file-earmark-text",
         "Rendimiento Equipo": "award",
-        "Cronograma": "calendar3",
+        #"Cronograma": "calendar3",
         "Escáner QR": "camera",
         "Reportar Evento": "exclamation-triangle",
         "Fichas Técnicas": "file-medical",
@@ -321,9 +322,9 @@ elif menu == "Asignación Tareas" and rol_nivel >= 2:
 elif menu == "Gestión Usuarios":
     mostrar_modulo_gestion_usuarios()
 
-elif menu == "Cronograma" and rol_nivel >= 5:
-    st.title("📅 Cronograma de Mantenimientos")
-    st.info("📋 Módulo en desarrollo - Programación de mantenimientos preventivos")
+#elif menu == "Cronograma" and rol_nivel >= 5:
+    #st.title("📅 Cronograma de Mantenimientos")
+    #st.info("📋 Módulo en desarrollo - Programación de mantenimientos preventivos")
 
 elif menu == "Mantenimientos":
     st.title("🔧 Gestión de Mantenimientos")
@@ -370,8 +371,7 @@ elif menu == "Reportes":
     mostrar_modulo_reportes()
 
 elif menu == "Rendimiento Equipo":
-    st.title("🏆 Rendimiento del Equipo")
-    st.info("📈 Módulo en desarrollo - Métricas de rendimiento")
+    mostrar_rendimiento_equipo()
 
 else:
     st.title(f"🔧 {menu}")
