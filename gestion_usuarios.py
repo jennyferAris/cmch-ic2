@@ -56,7 +56,7 @@ def mostrar_gestion_usuarios():
     nivel_usuario = st.session_state.get('rol_nivel', 0)
     nombre_usuario = st.session_state.get('name', '')
     
-    if nivel_usuario < 5:
+    if nivel_usuario < 1:
         st.error("🚫 **Acceso Denegado**")
         st.warning("Solo el Ingeniero Clínico (Nivel 5) puede gestionar usuarios.")
         return
