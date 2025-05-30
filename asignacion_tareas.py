@@ -67,18 +67,13 @@ def cargar_equipos_base_datos():
         for fila in datos:
             # Usar las columnas EXACTAS de tu base de datos
             equipo_info = {
-                'numero_equipo': str(fila.get('N° EQUIPO', '')).strip(),
-                'numero_serie': str(fila.get('N° SERIE', '')).strip(),
+                'numero_equipo': str(fila.get('Codigo nuevo', '')).strip(),
+                'numero_serie': str(fila.get('SERIE', '')).strip(),
                 'nombre_equipo': str(fila.get('EQUIPO', '')).strip(),
-                'area': str(fila.get('ÁREA', '')).strip(),
-                'ubicacion': str(fila.get('UBICACIÓN', '')).strip(),
+                'area': str(fila.get('AMBIENTE', '')).strip(),
+                'ubicacion': str(fila.get('SEDE', '')).strip(),
                 'marca': str(fila.get('MARCA', '')).strip(),
-                'modelo': str(fila.get('MODELO', '')).strip(),
-                'clasificacion': str(fila.get('CLASIFICACIÓN', '')).strip(),
-                'procedencia': str(fila.get('PROCEDENCIA', '')).strip(),
-                'proveedor': str(fila.get('PROVEEDOR', '')).strip(),
-                'estado': str(fila.get('ESTADO', '')).strip(),
-                'observaciones': str(fila.get('OBSERVACIONES', '')).strip()
+                'modelo': str(fila.get('MODELO', '')).strip()
             }
             
             # Solo agregar si tiene número de equipo válido
@@ -320,21 +315,13 @@ def mostrar_asignacion_tareas():
                             
                             # Mostrar detalles del equipo
                             with st.expander("🔍 Detalles del Equipo Seleccionado"):
-                                col_det1, col_det2 = st.columns(2)
+                                col_det1 = st.columns(1)
                                 with col_det1:
                                     st.write(f"**📍 Área:** {equipo_data.get('area', 'N/A')}")
                                     st.write(f"**📍 Ubicación:** {equipo_data.get('ubicacion', 'N/A')}")
                                     st.write(f"**🏷️ N° Serie:** {equipo_data.get('numero_serie', 'N/A')}")
                                     st.write(f"**🏭 Marca:** {equipo_data.get('marca', 'N/A')}")
                                     st.write(f"**📱 Modelo:** {equipo_data.get('modelo', 'N/A')}")
-                                with col_det2:
-                                    st.write(f"**🏢 Proveedor:** {equipo_data.get('proveedor', 'N/A')}")
-                                    st.write(f"**📊 Estado:** {equipo_data.get('estado', 'N/A')}")
-                                    st.write(f"**🏷️ Clasificación:** {equipo_data.get('clasificacion', 'N/A')}")
-                                    st.write(f"**🌍 Procedencia:** {equipo_data.get('procedencia', 'N/A')}")
-                                
-                                if equipo_data.get('observaciones'):
-                                    st.write(f"**📝 Observaciones:** {equipo_data.get('observaciones', 'N/A')}")
                         else:
                             st.warning(f"⚠️ No se encontraron equipos en el área '{area_filtro}'.")
                     else:
