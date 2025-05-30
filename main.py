@@ -287,7 +287,7 @@ if menu == "Inicio":
 elif menu == "Base de Datos":
     mostrar_base_datos()
 
-elif menu == "Dashboard KPIs" and rol_nivel >= 5:
+elif menu == "Dashboard KPIs" and rol_nivel == 5:
     mostrar_modulo_dashboard()
 
 # Generador QR
