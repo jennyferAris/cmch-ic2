@@ -83,18 +83,25 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    
+
     # CSS para fondo gradiente con tus colores personalizados + eliminar header
     st.markdown("""
     <style>
     /* Eliminar header y elementos de Streamlit */
+                
+    header[data-testid="stHeader"] {
+    display: none !important;
+    }
+                
     .stApp > header {
-        background-color: transparent;
+        display: none;
     }
     
     .stApp {
         background: linear-gradient(135deg, #b42641 0%, #ffc331 50%, #ffffff 100%);
         min-height: 100vh;
+        margin-top: -80px;
+        padding-top: 20px;
     }
     
     /* Ocultar elementos del header */
@@ -110,8 +117,8 @@ def mostrar_login():
         display: none;
     }
     
-    header[data-testid="stHeader"] {
-        display: none;
+    #MainMenu {
+    display: none !important;
     }
     
     .login-container {
