@@ -112,46 +112,10 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    # CSS ultra agresivo para eliminar la cajita blanca + diseño bonito
+    # CSS corregido - eliminar cajita pero mantener contenido
     st.markdown("""
     <style>
-    /* ELIMINAR COMPLETAMENTE LA CAJITA BLANCA */
-    .stApp > div:first-child {
-        display: none !important;
-    }
-    
-    .main > div:first-child {
-        display: none !important;
-    }
-    
-    div[data-testid="stAppViewContainer"] > .main > div:first-child {
-        display: none !important;
-    }
-    
-    .block-container:first-child {
-        display: none !important;
-    }
-    
-    /* Forzar transparencia en TODOS los contenedores */
-    .main .block-container {
-        background: transparent !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-    
-    div[data-testid="stMain"] {
-        background: transparent !important;
-    }
-    
-    div[data-testid="stAppViewContainer"] {
-        background: transparent !important;
-    }
-    
-    .main {
-        background: transparent !important;
-    }
-    
-    /* Eliminar elementos de Streamlit */
+    /* Eliminar elementos específicos de Streamlit */
     header[data-testid="stHeader"] {
         display: none !important;
     }
@@ -164,10 +128,9 @@ def mostrar_login():
         display: none !important;
     }
     
-    /* Forzar que TODO el HTML tenga el fondo del gradiente */
-    html, body, .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        min-height: 100vh !important;
+    /* Eliminar solo el primer div problemático */
+    .main > div:first-child:empty {
+        display: none !important;
     }
     
     /* Fondo con gradiente animado */
@@ -184,6 +147,12 @@ def mostrar_login():
         100% { background-position: 0% 50%; }
     }
     
+    /* Asegurar que el contenedor principal sea transparente */
+    .block-container {
+        background: transparent !important;
+        padding-top: 4rem !important;
+    }
+    
     /* Contenedor glassmorphism */
     .login-container {
         background: rgba(255, 255, 255, 0.15) !important;
@@ -194,11 +163,12 @@ def mostrar_login():
         box-shadow: 
             0 8px 32px 0 rgba(31, 38, 135, 0.37),
             inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-        margin: 80px auto !important;
+        margin: 40px auto !important;
         max-width: 480px !important;
         text-align: center !important;
         position: relative !important;
         overflow: hidden !important;
+        z-index: 10 !important;
     }
     
     /* Efecto de brillo */
@@ -212,6 +182,7 @@ def mostrar_login():
         background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
         transform: rotate(45deg);
         animation: shine 3s infinite;
+        z-index: -1;
     }
     
     @keyframes shine {
@@ -245,6 +216,7 @@ def mostrar_login():
         box-shadow: 0 8px 25px rgba(180, 38, 65, 0.3) !important;
         position: relative !important;
         overflow: hidden !important;
+        z-index: 20 !important;
     }
     
     .stButton > button::before {
@@ -273,6 +245,7 @@ def mostrar_login():
         margin-bottom: 40px !important;
         padding: 20px !important;
         position: relative !important;
+        z-index: 15 !important;
     }
     
     .logo-container::after {
@@ -293,7 +266,18 @@ def mostrar_login():
         50% { opacity: 1; transform: translateX(-50%) scaleX(1.2); }
     }
     
+    /* Asegurar que la imagen sea visible */
+    .stImage {
+        z-index: 25 !important;
+        position: relative !important;
+    }
+    
     /* Texto con sombras suaves */
+    .content-text {
+        z-index: 20 !important;
+        position: relative !important;
+    }
+    
     .content-text h1 {
         color: white !important;
         text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
@@ -310,9 +294,11 @@ def mostrar_login():
     </style>
     """, unsafe_allow_html=True)
          
-    # Sin espacios superiores para evitar crear contenedores adicionales
+    # Espacio superior
+    st.write("")
+    st.write("")
          
-    # Centrar contenido directamente
+    # Centrar contenido
     col1, col2, col3 = st.columns([1, 2, 1])
          
     with col2:
