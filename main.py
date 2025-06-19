@@ -12,7 +12,29 @@ from reportes import mostrar_modulo_reportes
 from rendimiento_equipo import mostrar_rendimiento_equipo
 
 
-st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
+#st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
+
+# Al inicio del archivo, agregar configuración de página
+st.set_page_config(
+    page_title="MEDIFLOW",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# CSS global para eliminar elementos
+st.markdown("""
+<style>
+    .reportview-container .main .block-container {
+        padding-top: 0rem;
+        padding-bottom: 0rem;
+    }
+    .reportview-container .main {
+        color: black;
+        background-color: transparent;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Función para cargar roles desde secrets
 @st.cache_data
