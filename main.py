@@ -83,14 +83,61 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
+        # CSS para fondo gradiente con tus colores personalizados
+    st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #b42641 0%, #ffc331 50%, #ffffff 100%);
+        min-height: 100vh;
+    }
+    
+    .login-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 40px rgba(180, 38, 65, 0.2);
+        margin: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Personalizar el botón */
+    .stButton > button {
+        background: linear-gradient(45deg, #b42641 0%, #ffc331 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        color: white;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(180, 38, 65, 0.3);
+        background: linear-gradient(45deg, #a0213a 0%, #e6b02e 100%);
+    }
+    
+    /* Efecto hover en el contenedor */
+    .login-container:hover {
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
+        box-shadow: 0 25px 50px rgba(180, 38, 65, 0.25);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Crear espacio superior
     st.write("")
     st.write("")
-
+    
     # Centrar el botón de login
     col1, col2, col3 = st.columns([1, 2, 1])
-
+    
     with col2:
+        # Contenedor con fondo blanco semitransparente
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        
         # Mostrar logo usando st.image
         try:
             # Usar columnas internas para centrar la imagen
@@ -99,36 +146,39 @@ def mostrar_login():
                 st.image("static/MEDIFLOW LOGO.png", width=220)
         except:
             st.error("No se pudo cargar el logo")
-    
+        
         # Centrar todo el contenido
         st.markdown("""
         <div style="text-align: center;">
-            <h3 style="color: #666; margin-bottom: 30px;">
+            <h3 style="color: #b42641; margin-bottom: 30px; font-weight: 600;">
                 Sistema de Gestión de Equipos Médicos
             </h3>
-            <p style="font-size: 18px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+            <p style="font-size: 18px; color: #2c3e50; line-height: 1.6; margin-bottom: 20px;">
                 Sistema integral para mantenimiento preventivo, inventario y gestión técnica.
             </p>
-            <p style="font-size: 16px; color: #777;">
+            <p style="font-size: 16px; color: #555;">
                 Para continuar, inicia sesión con tu cuenta autorizada.
             </p>
         </div>
         """, unsafe_allow_html=True)
-    
+        
         # Espacio antes del botón
         st.write("")
-    
-        if st.button("🔑 Ingresar con Google", 
-                    type="primary", 
-                    use_container_width=True,
-                    help="Haz clic para iniciar sesión con tu cuenta de Google"):
+        
+        if st.button("🔑 Ingresar con Google",
+                     type="primary",
+                     use_container_width=True,
+                     help="Haz clic para iniciar sesión con tu cuenta de Google"):
             st.login("google")
+        
+        # Cerrar el contenedor
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # Verificar si el usuario está logueado
 if not st.user.is_logged_in:
     mostrar_login()
     st.stop()
-
+    
 # Cargar roles desde secrets
 roles_data = cargar_roles()
 email = st.user.email
