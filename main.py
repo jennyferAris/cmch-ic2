@@ -112,7 +112,7 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    # CSS corregido - eliminar cajita pero mantener contenido
+    # CSS corregido - eliminar contenedores de imagen
     st.markdown("""
     <style>
     /* Eliminar elementos específicos de Streamlit */
@@ -128,9 +128,39 @@ def mostrar_login():
         display: none !important;
     }
     
-    /* Eliminar solo el primer div problemático */
-    .main > div:first-child:empty {
-        display: none !important;
+    /* Eliminar contenedores y fondos de imagen */
+    .stImage {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .stImage > div {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Eliminar cualquier contenedor que rodee la imagen */
+    div[data-testid="stImage"] {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Asegurar que las columnas también sean transparentes */
+    .stColumn {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .stColumn > div {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
     
     /* Fondo con gradiente animado */
@@ -168,7 +198,6 @@ def mostrar_login():
         text-align: center !important;
         position: relative !important;
         overflow: hidden !important;
-        z-index: 10 !important;
     }
     
     /* Efecto de brillo */
@@ -182,7 +211,7 @@ def mostrar_login():
         background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
         transform: rotate(45deg);
         animation: shine 3s infinite;
-        z-index: -1;
+        z-index: 1;
     }
     
     @keyframes shine {
@@ -216,7 +245,7 @@ def mostrar_login():
         box-shadow: 0 8px 25px rgba(180, 38, 65, 0.3) !important;
         position: relative !important;
         overflow: hidden !important;
-        z-index: 20 !important;
+        z-index: 10 !important;
     }
     
     .stButton > button::before {
@@ -240,12 +269,13 @@ def mostrar_login():
         background: linear-gradient(135deg, #a0213a 0%, #ff5252 50%, #e6b02e 100%) !important;
     }
     
-    /* Logo container con efectos */
+    /* Logo container con efectos - asegurar que esté por encima */
     .logo-container {
         margin-bottom: 40px !important;
         padding: 20px !important;
         position: relative !important;
-        z-index: 15 !important;
+        z-index: 5 !important;
+        background: transparent !important;
     }
     
     .logo-container::after {
@@ -259,6 +289,7 @@ def mostrar_login():
         background: linear-gradient(90deg, #b42641, #ffc331, #b42641);
         border-radius: 2px;
         animation: pulse 2s ease-in-out infinite;
+        z-index: 6;
     }
     
     @keyframes pulse {
@@ -266,15 +297,9 @@ def mostrar_login():
         50% { opacity: 1; transform: translateX(-50%) scaleX(1.2); }
     }
     
-    /* Asegurar que la imagen sea visible */
-    .stImage {
-        z-index: 25 !important;
-        position: relative !important;
-    }
-    
     /* Texto con sombras suaves */
     .content-text {
-        z-index: 20 !important;
+        z-index: 5 !important;
         position: relative !important;
     }
     
@@ -290,6 +315,16 @@ def mostrar_login():
     .content-text p {
         color: rgba(255, 255, 255, 0.9) !important;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    /* Asegurar que todos los contenidos estén por encima del efecto de brillo */
+    .logo-container *, 
+    .content-text *, 
+    .stButton *,
+    .stImage *,
+    .stColumn * {
+        position: relative !important;
+        z-index: 10 !important;
     }
     </style>
     """, unsafe_allow_html=True)
