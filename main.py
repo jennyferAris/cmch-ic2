@@ -105,36 +105,11 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    # CSS ultra específico para eliminar la caja blanca
+    # CSS para diseño limpio y profesional
     st.markdown("""
     <style>
-    /* Forzar que TODO tenga el fondo del gradiente */
-    html, body, [class*="css"], .stApp, .main, .block-container {
-        background: linear-gradient(135deg, #b42641 0%, #ffc331 50%, #ffffff 100%) !important;
-    }
-    
-    /* Eliminar cualquier fondo blanco */
-    .stApp > div {
-        background: transparent !important;
-    }
-    
-    .main > div {
-        background: transparent !important;
-    }
-    
-    /* Targeting específico para contenedores */
-    div[data-testid="stAppViewContainer"] > .main > div > div > div {
-        background: transparent !important;
-    }
-    
-    .block-container {
-        background: transparent !important;
-        padding-top: 1rem !important;
-    }
-    
-    /* Headers y elementos molestos */
+    /* Eliminar elementos de Streamlit */
     header[data-testid="stHeader"] {
-        height: 0px !important;
         display: none !important;
     }
     
@@ -146,77 +121,96 @@ def mostrar_login():
         display: none !important;
     }
     
-    /* El contenedor de login */
-    .login-container {
-        background: rgba(255, 255, 255, 0.95) !important;
-        border-radius: 20px;
-        padding: 40px;
-        box-shadow: 0 20px 40px rgba(180, 38, 65, 0.2);
-        margin: 50px auto;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        max-width: 600px;
+    /* Fondo limpio */
+    .stApp {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        min-height: 100vh;
     }
     
-    /* Botón personalizado */
+    .block-container {
+        padding-top: 2rem !important;
+    }
+    
+    /* Contenedor principal */
+    .login-container {
+        background: white;
+        border-radius: 25px;
+        padding: 50px 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        margin: 40px auto;
+        max-width: 500px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        text-align: center;
+    }
+    
+    /* Efectos hover sutiles */
+    .login-container:hover {
+        transform: translateY(-5px);
+        transition: all 0.4s ease;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Botón que combine con los colores del logo */
     .stButton > button {
-        background: linear-gradient(45deg, #b42641 0%, #ffc331 100%) !important;
-        border: none !important;
-        border-radius: 25px !important;
-        padding: 12px 30px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        color: white !important;
+        background: linear-gradient(45deg, #b42641 0%, #ffc331 100%);
+        border: none;
+        border-radius: 30px;
+        padding: 15px 40px;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        color: white;
+        width: 100%;
+        margin-top: 20px;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 10px 20px rgba(180, 38, 65, 0.3) !important;
-        background: linear-gradient(45deg, #a0213a 0%, #e6b02e 100%) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(180, 38, 65, 0.3);
+        background: linear-gradient(45deg, #a0213a 0%, #e6b02e 100%);
     }
     
-    /* Efecto hover en el contenedor */
-    .login-container:hover {
-        transform: translateY(-2px);
-        transition: all 0.3s ease;
-        box-shadow: 0 25px 50px rgba(180, 38, 65, 0.25);
+    /* Estilo para el logo */
+    .logo-container {
+        margin-bottom: 30px;
+        padding: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Centrar el contenido
+    # Espacio superior
+    st.write("")
+    st.write("")
+    
+    # Centrar contenido
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
-        # Contenedor con fondo blanco semitransparente
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # Mostrar logo usando st.image
+        # Logo centrado
+        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
         try:
-            # Usar columnas internas para centrar la imagen
-            img_col1, img_col2, img_col3 = st.columns([1.5, 2, 1.5])
-            with img_col2:
-                st.image("static/MEDIFLOW LOGO.png", width=220)
+            st.image("static/MEDIFLOW LOGO.png", width=250)
         except:
             st.error("No se pudo cargar el logo")
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        # Centrar todo el contenido
+        # Contenido
         st.markdown("""
-        <div style="text-align: center;">
-            <h3 style="color: #b42641; margin-bottom: 30px; font-weight: 600;">
-                Sistema de Gestión de Equipos Médicos
-            </h3>
-            <p style="font-size: 18px; color: #2c3e50; line-height: 1.6; margin-bottom: 20px;">
-                Sistema integral para mantenimiento preventivo, inventario y gestión técnica.
+        <div style="text-align: center; margin: 30px 0;">
+            <h2 style="color: #b42641; margin-bottom: 20px; font-weight: 600; font-size: 28px;">
+                Bienvenido
+            </h2>
+            <p style="font-size: 18px; color: #6c757d; line-height: 1.6; margin-bottom: 15px;">
+                Sistema integral para mantenimiento preventivo, 
+                inventario y gestión técnica de equipos médicos.
             </p>
-            <p style="font-size: 16px; color: #555;">
-                Para continuar, inicia sesión con tu cuenta autorizada.
+            <p style="font-size: 16px; color: #adb5bd;">
+                Inicia sesión para continuar
             </p>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Espacio antes del botón
-        st.write("")
         
         if st.button("🔑 Ingresar con Google",
                      type="primary",
@@ -224,7 +218,6 @@ def mostrar_login():
                      help="Haz clic para iniciar sesión con tu cuenta de Google"):
             st.login("google")
         
-        # Cerrar el contenedor
         st.markdown('</div>', unsafe_allow_html=True)
 
 # Verificar si el usuario está logueado
