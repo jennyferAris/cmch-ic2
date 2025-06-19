@@ -89,7 +89,7 @@ def mostrar_login():
     # Centrar todo el contenido
     st.markdown("""
     <div style="text-align: center; padding: 40px 20px; max-width: 800px; margin: 0 auto;">
-        <img src="images\MEDIFLOW LOGO.svg" alt="Logo Mediflow" style="width: 220px; margin-bottom: 20px;">
+        <img src="images\MEDIFLOW LOGO.png" alt="Logo Mediflow" style="width: 220px; margin-bottom: 20px;">
         <h3 style="color: #666; margin-bottom: 30px;">
             Sistema de Gestión de Equipos Médicos
         </h3>
