@@ -14,13 +14,33 @@ from rendimiento_equipo import mostrar_rendimiento_equipo
 
 #st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
-# Al inicio del archivo, agregar configuración de página
+# CONFIGURACIÓN CRÍTICA - AL INICIO DEL ARCHIVO
 st.set_page_config(
-    page_title="MEDIFLOW",
+    page_title="MEDIFLOW - Login",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# CSS GLOBAL CRÍTICO - JUSTO DESPUÉS
+st.markdown("""
+<style>
+    .reportview-container .main .block-container {
+        padding-top: 0rem !important;
+        padding-bottom: 0rem !important;
+        background: transparent !important;
+    }
+    
+    .reportview-container .main {
+        background: transparent !important;
+    }
+    
+    .main > div:first-child {
+        display: none !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 
 
 # Función para cargar roles desde secrets
@@ -92,9 +112,45 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    # CSS con efectos de partículas
+    # CSS ultra agresivo para eliminar la cajita blanca + diseño bonito
     st.markdown("""
     <style>
+    /* ELIMINAR COMPLETAMENTE LA CAJITA BLANCA */
+    .stApp > div:first-child {
+        display: none !important;
+    }
+    
+    .main > div:first-child {
+        display: none !important;
+    }
+    
+    div[data-testid="stAppViewContainer"] > .main > div:first-child {
+        display: none !important;
+    }
+    
+    .block-container:first-child {
+        display: none !important;
+    }
+    
+    /* Forzar transparencia en TODOS los contenedores */
+    .main .block-container {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    div[data-testid="stMain"] {
+        background: transparent !important;
+    }
+    
+    div[data-testid="stAppViewContainer"] {
+        background: transparent !important;
+    }
+    
+    .main {
+        background: transparent !important;
+    }
+    
     /* Eliminar elementos de Streamlit */
     header[data-testid="stHeader"] {
         display: none !important;
@@ -108,131 +164,155 @@ def mostrar_login():
         display: none !important;
     }
     
-    /* Fondo con gradiente suave */
-    .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        position: relative;
-        overflow: hidden;
+    /* Forzar que TODO el HTML tenga el fondo del gradiente */
+    html, body, .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        min-height: 100vh !important;
     }
     
-    /* Partículas flotantes */
-    .stApp::before {
+    /* Fondo con gradiente animado */
+    .stApp {
+        background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c) !important;
+        background-size: 400% 400% !important;
+        animation: gradient 15s ease infinite !important;
+        min-height: 100vh !important;
+    }
+    
+    @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    /* Contenedor glassmorphism */
+    .login-container {
+        background: rgba(255, 255, 255, 0.15) !important;
+        backdrop-filter: blur(20px) !important;
+        border-radius: 25px !important;
+        padding: 60px 50px !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 
+            0 8px 32px 0 rgba(31, 38, 135, 0.37),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        margin: 80px auto !important;
+        max-width: 480px !important;
+        text-align: center !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    /* Efecto de brillo */
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
+    }
+    
+    @keyframes shine {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    }
+    
+    /* Hover effect */
+    .login-container:hover {
+        transform: translateY(-10px) scale(1.02) !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 
+            0 20px 60px 0 rgba(31, 38, 135, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Botón con gradiente y efectos */
+    .stButton > button {
+        background: linear-gradient(135deg, #b42641 0%, #ff6b6b 50%, #ffc331 100%) !important;
+        border: none !important;
+        border-radius: 50px !important;
+        padding: 18px 40px !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        color: white !important;
+        width: 100% !important;
+        margin-top: 30px !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+        box-shadow: 0 8px 25px rgba(180, 38, 65, 0.3) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    .stButton > button::before {
         content: '';
         position: absolute;
         top: 0;
-        left: 0;
+        left: -100%;
         width: 100%;
         height: 100%;
-        background-image: 
-            radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 20%, rgba(255, 195, 49, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(180, 38, 65, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
-        animation: float 20s ease-in-out infinite;
-        pointer-events: none;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
     }
     
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        33% { transform: translateY(-30px) rotate(120deg); }
-        66% { transform: translateY(20px) rotate(240deg); }
-    }
-    
-    .block-container {
-        padding-top: 3rem !important;
-        position: relative;
-        z-index: 1;
-    }
-    
-    /* Contenedor principal con efecto de cristal */
-    .login-container {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border-radius: 30px;
-        padding: 70px 60px;
-        box-shadow: 
-            0 25px 50px -12px rgba(0, 0, 0, 0.25),
-            0 0 0 1px rgba(255, 255, 255, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        margin: 40px auto;
-        max-width: 500px;
-        text-align: center;
-        position: relative;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    
-    /* Efectos de hover suaves */
-    .login-container:hover {
-        transform: translateY(-15px);
-        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 
-            0 35px 70px -12px rgba(0, 0, 0, 0.3),
-            0 0 0 1px rgba(255, 255, 255, 0.6),
-            inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    }
-    
-    /* Botón con gradiente médico */
-    .stButton > button {
-        background: linear-gradient(45deg, #b42641, #d63384, #ffc331);
-        border: none;
-        border-radius: 25px;
-        padding: 20px 45px;
-        font-weight: 600;
-        font-size: 17px;
-        transition: all 0.4s ease;
-        color: white;
-        width: 100%;
-        margin-top: 35px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        box-shadow: 0 10px 30px rgba(180, 38, 65, 0.3);
-        position: relative;
-        overflow: hidden;
+    .stButton > button:hover::before {
+        left: 100%;
     }
     
     .stButton > button:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(180, 38, 65, 0.4);
-        background: linear-gradient(45deg, #a0213a, #c42a69, #e6b02e);
+        transform: translateY(-3px) !important;
+        box-shadow: 0 15px 40px rgba(180, 38, 65, 0.4) !important;
+        background: linear-gradient(135deg, #a0213a 0%, #ff5252 50%, #e6b02e 100%) !important;
     }
     
-    /* Logo container con animación */
+    /* Logo container con efectos */
     .logo-container {
-        margin-bottom: 50px;
-        padding: 25px;
-        position: relative;
-        animation: logoFloat 6s ease-in-out infinite;
-    }
-    
-    @keyframes logoFloat {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
+        margin-bottom: 40px !important;
+        padding: 20px !important;
+        position: relative !important;
     }
     
     .logo-container::after {
         content: '';
         position: absolute;
-        bottom: 15px;
+        bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
-        width: 100px;
-        height: 5px;
-        background: linear-gradient(90deg, 
-            rgba(180, 38, 65, 0.8), 
-            rgba(255, 195, 49, 0.8), 
-            rgba(180, 38, 65, 0.8));
-        border-radius: 3px;
-        box-shadow: 0 2px 10px rgba(180, 38, 65, 0.3);
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(90deg, #b42641, #ffc331, #b42641);
+        border-radius: 2px;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
+        50% { opacity: 1; transform: translateX(-50%) scaleX(1.2); }
+    }
+    
+    /* Texto con sombras suaves */
+    .content-text h1 {
+        color: white !important;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+        margin-bottom: 25px !important;
+        font-weight: 700 !important;
+        font-size: 36px !important;
+        letter-spacing: -0.5px !important;
+    }
+    
+    .content-text p {
+        color: rgba(255, 255, 255, 0.9) !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
     }
     </style>
     """, unsafe_allow_html=True)
          
-    # Espacio superior
-    st.write("")
-    st.write("")
+    # Sin espacios superiores para evitar crear contenedores adicionales
          
-    # Centrar contenido
+    # Centrar contenido directamente
     col1, col2, col3 = st.columns([1, 2, 1])
          
     with col2:
@@ -251,15 +331,13 @@ def mostrar_login():
                  
         # Contenido elegante
         st.markdown("""
-        <div style="text-align: center; margin: 30px 0;">
-            <h1 style="color: #b42641; margin-bottom: 30px; font-weight: 800; font-size: 38px; letter-spacing: -1px;">
-                ¡Bienvenido a MEDIFLOW!
-            </h1>
-            <p style="font-size: 19px; color: #4a5568; line-height: 1.8; margin-bottom: 25px; font-weight: 400;">
-                Tu plataforma integral para la gestión profesional de equipos médicos
+        <div class="content-text" style="text-align: center; margin: 25px 0;">
+            <h1>¡Bienvenido!</h1>
+            <p style="font-size: 18px; line-height: 1.7; margin-bottom: 20px; font-weight: 400;">
+                Accede al sistema integral de gestión para equipos médicos
             </p>
-            <p style="font-size: 16px; color: #718096; font-weight: 500;">
-                Inicia sesión para acceder al sistema
+            <p style="font-size: 16px; font-weight: 500;">
+                Usa tu cuenta autorizada para continuar
             </p>
         </div>
         """, unsafe_allow_html=True)
