@@ -22,19 +22,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS global para eliminar elementos
-st.markdown("""
-<style>
-    .reportview-container .main .block-container {
-        padding-top: 0rem;
-        padding-bottom: 0rem;
-    }
-    .reportview-container .main {
-        color: black;
-        background-color: transparent;
-    }
-</style>
-""", unsafe_allow_html=True)
 
 # Función para cargar roles desde secrets
 @st.cache_data
@@ -105,109 +92,6 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    # CSS para diseño moderno
-    st.markdown("""
-    <style>
-    /* Eliminar elementos de Streamlit */
-    header[data-testid="stHeader"] {
-        display: none !important;
-    }
-    
-    .stDeployButton {
-        display: none !important;
-    }
-    
-    footer {
-        display: none !important;
-    }
-    
-    /* Fondo elegante */
-    .stApp {
-        background: #ffffff;
-        min-height: 100vh;
-    }
-    
-    .block-container {
-        padding-top: 3rem !important;
-    }
-    
-    /* Contenedor con diseño de tarjeta */
-    .login-container {
-        background: white;
-        border-radius: 20px;
-        padding: 60px 50px;
-        box-shadow: 
-            0 0 0 1px rgba(0, 0, 0, 0.05),
-            0 20px 25px -5px rgba(0, 0, 0, 0.1),
-            0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        margin: 50px auto;
-        max-width: 450px;
-        text-align: center;
-        position: relative;
-    }
-    
-    /* Efecto de brillo sutil */
-    .login-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(180, 38, 65, 0.4), transparent);
-    }
-    
-    /* Hover effect */
-    .login-container:hover {
-        transform: translateY(-8px);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 
-            0 0 0 1px rgba(0, 0, 0, 0.05),
-            0 32px 40px -12px rgba(0, 0, 0, 0.15),
-            0 16px 16px -8px rgba(0, 0, 0, 0.08);
-    }
-    
-    /* Botón elegante */
-    .stButton > button {
-        background: linear-gradient(135deg, #b42641 0%, #d63384 50%, #ffc331 100%);
-        border: none;
-        border-radius: 12px;
-        padding: 16px 32px;
-        font-weight: 600;
-        font-size: 16px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        color: white;
-        width: 100%;
-        margin-top: 25px;
-        letter-spacing: 0.5px;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 20px 25px -5px rgba(180, 38, 65, 0.4);
-        background: linear-gradient(135deg, #a0213a 0%, #c42a69 50%, #e6b02e 100%);
-    }
-    
-    /* Logo container con efecto */
-    .logo-container {
-        margin-bottom: 40px;
-        padding: 10px;
-        position: relative;
-    }
-    
-    .logo-container::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60px;
-        height: 3px;
-        background: linear-gradient(90deg, #b42641, #ffc331);
-        border-radius: 2px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
     
     # Espacio superior
     st.write("")
