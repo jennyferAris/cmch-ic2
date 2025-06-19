@@ -86,30 +86,35 @@ def mostrar_login():
     # Crear espacio superior
     st.write("")
     st.write("")
-    
-    # Centrar todo el contenido
-    st.markdown("""
-    <div style="text-align: center; padding: 40px 20px; max-width: 800px; margin: 0 auto;">
-        <img src="./static/MEDIFLOW_LOGO.png" alt="Logo Mediflow" style="width: 220px; margin-bottom: 20px;">
-        <h3 style="color: #666; margin-bottom: 30px;">
-            Sistema de Gestión de Equipos Médicos
-        </h3>
-        <p style="font-size: 18px; color: #555; line-height: 1.6; margin-bottom: 20px;">
-            Sistema integral para mantenimiento preventivo, inventario y gestión técnica.
-        </p>
-        <p style="font-size: 16px; color: #777;">
-            Para continuar, inicia sesión con tu cuenta autorizada.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Espacio antes del botón
-    st.write("")
-    
+
     # Centrar el botón de login
     col1, col2, col3 = st.columns([1, 2, 1])
-    
+
     with col2:
+        # Mostrar logo usando st.image
+        try:
+            st.image("static/MEDIFLOW LOGO.png", width=220)
+        except:
+            st.error("No se pudo cargar el logo")
+    
+        # Centrar todo el contenido
+        st.markdown("""
+        <div style="text-align: center;">
+            <h3 style="color: #666; margin-bottom: 30px;">
+                Sistema de Gestión de Equipos Médicos
+            </h3>
+            <p style="font-size: 18px; color: #555; line-height: 1.6; margin-bottom: 20px;">
+                Sistema integral para mantenimiento preventivo, inventario y gestión técnica.
+            </p>
+            <p style="font-size: 16px; color: #777;">
+                Para continuar, inicia sesión con tu cuenta autorizada.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+        # Espacio antes del botón
+        st.write("")
+    
         if st.button("🔑 Ingresar con Google", 
                     type="primary", 
                     use_container_width=True,
