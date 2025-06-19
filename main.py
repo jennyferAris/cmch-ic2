@@ -183,22 +183,6 @@ def mostrar_login():
         padding-top: 4rem !important;
     }
     
-    /* Contenedor glassmorphism */
-    .login-container {
-        background: rgba(255, 255, 255, 0.15) !important;
-        backdrop-filter: blur(20px) !important;
-        border-radius: 25px !important;
-        padding: 60px 50px !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        box-shadow: 
-            0 8px 32px 0 rgba(31, 38, 135, 0.37),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-        margin: 40px auto !important;
-        max-width: 480px !important;
-        text-align: center !important;
-        position: relative !important;
-        overflow: hidden !important;
-    }
     
     /* Efecto de brillo */
     .login-container::before {
@@ -337,10 +321,10 @@ def mostrar_login():
     col1, col2, col3 = st.columns([1, 2, 1])
          
     with col2:
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        #st.markdown('<div class="login-container">', unsafe_allow_html=True)
                  
         # Logo con tu código específico para centrar
-        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+        #st.markdown('<div class="logo-container">', unsafe_allow_html=True)
         try:
             # Usar columnas internas para centrar la imagen
             img_col1, img_col2, img_col3 = st.columns([1.5, 2, 1.5])
