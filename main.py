@@ -83,12 +83,35 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-        # CSS para fondo gradiente con tus colores personalizados
+    
+    # CSS para fondo gradiente con tus colores personalizados + eliminar header
     st.markdown("""
     <style>
+    /* Eliminar header y elementos de Streamlit */
+    .stApp > header {
+        background-color: transparent;
+    }
+    
     .stApp {
         background: linear-gradient(135deg, #b42641 0%, #ffc331 50%, #ffffff 100%);
         min-height: 100vh;
+    }
+    
+    /* Ocultar elementos del header */
+    .stDeployButton {
+        display: none;
+    }
+    
+    footer {
+        display: none;
+    }
+    
+    .stDecoration {
+        display: none;
+    }
+    
+    header[data-testid="stHeader"] {
+        display: none;
     }
     
     .login-container {
@@ -178,7 +201,7 @@ def mostrar_login():
 if not st.user.is_logged_in:
     mostrar_login()
     st.stop()
-    
+
 # Cargar roles desde secrets
 roles_data = cargar_roles()
 email = st.user.email
