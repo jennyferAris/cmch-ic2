@@ -93,7 +93,10 @@ def mostrar_login():
     with col2:
         # Mostrar logo usando st.image
         try:
-            st.image("static/MEDIFLOW LOGO.png", width=220)
+            # Usar columnas internas para centrar la imagen
+            img_col1, img_col2, img_col3 = st.columns([1, 2, 1])
+            with img_col2:
+                st.image("images/MEDIFLOW LOGO.png", width=220)
         except:
             st.error("No se pudo cargar el logo")
     
