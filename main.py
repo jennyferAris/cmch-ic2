@@ -105,7 +105,7 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    # CSS para diseño limpio y profesional
+    # CSS para diseño moderno
     st.markdown("""
     <style>
     /* Eliminar elementos de Streamlit */
@@ -121,59 +121,90 @@ def mostrar_login():
         display: none !important;
     }
     
-    /* Fondo limpio */
+    /* Fondo elegante */
     .stApp {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        background: #ffffff;
         min-height: 100vh;
     }
     
     .block-container {
-        padding-top: 2rem !important;
+        padding-top: 3rem !important;
     }
     
-    /* Contenedor principal */
+    /* Contenedor con diseño de tarjeta */
     .login-container {
         background: white;
-        border-radius: 25px;
-        padding: 50px 40px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-        margin: 40px auto;
-        max-width: 500px;
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 20px;
+        padding: 60px 50px;
+        box-shadow: 
+            0 0 0 1px rgba(0, 0, 0, 0.05),
+            0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        margin: 50px auto;
+        max-width: 450px;
         text-align: center;
+        position: relative;
     }
     
-    /* Efectos hover sutiles */
+    /* Efecto de brillo sutil */
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(180, 38, 65, 0.4), transparent);
+    }
+    
+    /* Hover effect */
     .login-container:hover {
-        transform: translateY(-5px);
-        transition: all 0.4s ease;
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.15);
+        transform: translateY(-8px);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 
+            0 0 0 1px rgba(0, 0, 0, 0.05),
+            0 32px 40px -12px rgba(0, 0, 0, 0.15),
+            0 16px 16px -8px rgba(0, 0, 0, 0.08);
     }
     
-    /* Botón que combine con los colores del logo */
+    /* Botón elegante */
     .stButton > button {
-        background: linear-gradient(45deg, #b42641 0%, #ffc331 100%);
+        background: linear-gradient(135deg, #b42641 0%, #d63384 50%, #ffc331 100%);
         border: none;
-        border-radius: 30px;
-        padding: 15px 40px;
+        border-radius: 12px;
+        padding: 16px 32px;
         font-weight: 600;
         font-size: 16px;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         color: white;
         width: 100%;
-        margin-top: 20px;
+        margin-top: 25px;
+        letter-spacing: 0.5px;
     }
     
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 15px 30px rgba(180, 38, 65, 0.3);
-        background: linear-gradient(45deg, #a0213a 0%, #e6b02e 100%);
+        box-shadow: 0 20px 25px -5px rgba(180, 38, 65, 0.4);
+        background: linear-gradient(135deg, #a0213a 0%, #c42a69 50%, #e6b02e 100%);
     }
     
-    /* Estilo para el logo */
+    /* Logo container con efecto */
     .logo-container {
-        margin-bottom: 30px;
-        padding: 20px;
+        margin-bottom: 40px;
+        padding: 10px;
+        position: relative;
+    }
+    
+    .logo-container::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, #b42641, #ffc331);
+        border-radius: 2px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -188,26 +219,28 @@ def mostrar_login():
     with col2:
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         
-        # Logo centrado
+        # Logo con tu código específico para centrar
         st.markdown('<div class="logo-container">', unsafe_allow_html=True)
         try:
-            st.image("static/MEDIFLOW LOGO.png", width=250)
+            # Usar columnas internas para centrar la imagen
+            img_col1, img_col2, img_col3 = st.columns([1.5, 2, 1.5])
+            with img_col2:
+                st.image("static/MEDIFLOW LOGO.png", width=220)
         except:
             st.error("No se pudo cargar el logo")
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Contenido
+        # Contenido elegante
         st.markdown("""
-        <div style="text-align: center; margin: 30px 0;">
-            <h2 style="color: #b42641; margin-bottom: 20px; font-weight: 600; font-size: 28px;">
+        <div style="text-align: center; margin: 25px 0;">
+            <h1 style="color: #b42641; margin-bottom: 25px; font-weight: 700; font-size: 32px; letter-spacing: -0.5px;">
                 Bienvenido
-            </h2>
-            <p style="font-size: 18px; color: #6c757d; line-height: 1.6; margin-bottom: 15px;">
-                Sistema integral para mantenimiento preventivo, 
-                inventario y gestión técnica de equipos médicos.
+            </h1>
+            <p style="font-size: 17px; color: #64748b; line-height: 1.7; margin-bottom: 20px; font-weight: 400;">
+                Accede al sistema integral de gestión para equipos médicos
             </p>
-            <p style="font-size: 16px; color: #adb5bd;">
-                Inicia sesión para continuar
+            <p style="font-size: 15px; color: #94a3b8; font-weight: 500;">
+                Usa tu cuenta autorizada para continuar
             </p>
         </div>
         """, unsafe_allow_html=True)
