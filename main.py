@@ -83,28 +83,22 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-
-    # CSS para fondo gradiente con tus colores personalizados + eliminar header
+    # CSS más agresivo para eliminar TODA la estructura de Streamlit
     st.markdown("""
     <style>
-    /* Eliminar header y elementos de Streamlit */
-                
-    header[data-testid="stHeader"] {
-    display: none !important;
-    }
-                
+    /* Eliminar COMPLETAMENTE todos los elementos de Streamlit */
     .stApp > header {
         display: none;
     }
     
-    .stApp {
-        background: linear-gradient(135deg, #b42641 0%, #ffc331 50%, #ffffff 100%);
-        min-height: 100vh;
-        margin-top: -80px;
-        padding-top: 20px;
+    header[data-testid="stHeader"] {
+        display: none;
     }
     
-    /* Ocultar elementos del header */
+    .stApp > div:first-child {
+        display: none;
+    }
+    
     .stDeployButton {
         display: none;
     }
@@ -118,7 +112,35 @@ def mostrar_login():
     }
     
     #MainMenu {
-    display: none !important;
+        display: none;
+    }
+    
+    /* Eliminar el container que causa la caja blanca */
+    .block-container {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    
+    /* Aplicar el gradiente a todo */
+    .stApp {
+        background: linear-gradient(135deg, #b42641 0%, #ffc331 50%, #ffffff 100%);
+        min-height: 100vh;
+    }
+    
+    /* Asegurar que el contenedor principal también tenga el fondo */
+    .main .block-container {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+    }
+    
+    /* Si hay un div contenedor, también aplicar transparencia */
+    div[data-testid="stAppViewContainer"] {
+        background: transparent;
+    }
+    
+    div[data-testid="stMain"] {
+        background: transparent;
     }
     
     .login-container {
@@ -126,9 +148,10 @@ def mostrar_login():
         border-radius: 20px;
         padding: 40px;
         box-shadow: 0 20px 40px rgba(180, 38, 65, 0.2);
-        margin: 20px;
+        margin: 50px auto;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.3);
+        max-width: 600px;
     }
     
     /* Personalizar el botón */
@@ -157,11 +180,9 @@ def mostrar_login():
     </style>
     """, unsafe_allow_html=True)
     
-    # Crear espacio superior
-    st.write("")
-    st.write("")
+    # Sin espacios superiores ya que eliminamos el header
     
-    # Centrar el botón de login
+    # Centrar el contenido directamente
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
