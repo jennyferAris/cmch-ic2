@@ -105,68 +105,50 @@ def obtener_iconos_menu(menus):
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
-    # CSS más agresivo para eliminar TODA la estructura de Streamlit
+    # CSS ultra específico para eliminar la caja blanca
     st.markdown("""
     <style>
-    /* Eliminar COMPLETAMENTE todos los elementos de Streamlit */
-    .stApp > header {
-        display: none;
+    /* Forzar que TODO tenga el fondo del gradiente */
+    html, body, [class*="css"], .stApp, .main, .block-container {
+        background: linear-gradient(135deg, #b42641 0%, #ffc331 50%, #ffffff 100%) !important;
     }
     
+    /* Eliminar cualquier fondo blanco */
+    .stApp > div {
+        background: transparent !important;
+    }
+    
+    .main > div {
+        background: transparent !important;
+    }
+    
+    /* Targeting específico para contenedores */
+    div[data-testid="stAppViewContainer"] > .main > div > div > div {
+        background: transparent !important;
+    }
+    
+    .block-container {
+        background: transparent !important;
+        padding-top: 1rem !important;
+    }
+    
+    /* Headers y elementos molestos */
     header[data-testid="stHeader"] {
-        display: none;
-    }
-    
-    .stApp > div:first-child {
-        display: none;
+        height: 0px !important;
+        display: none !important;
     }
     
     .stDeployButton {
-        display: none;
+        display: none !important;
     }
     
     footer {
-        display: none;
+        display: none !important;
     }
     
-    .stDecoration {
-        display: none;
-    }
-    
-    #MainMenu {
-        display: none;
-    }
-    
-    /* Eliminar el container que causa la caja blanca */
-    .block-container {
-        padding-top: 0;
-        padding-bottom: 0;
-    }
-    
-    /* Aplicar el gradiente a todo */
-    .stApp {
-        background: linear-gradient(135deg, #b42641 0%, #ffc331 50%, #ffffff 100%);
-        min-height: 100vh;
-    }
-    
-    /* Asegurar que el contenedor principal también tenga el fondo */
-    .main .block-container {
-        background: transparent;
-        padding: 0;
-        margin: 0;
-    }
-    
-    /* Si hay un div contenedor, también aplicar transparencia */
-    div[data-testid="stAppViewContainer"] {
-        background: transparent;
-    }
-    
-    div[data-testid="stMain"] {
-        background: transparent;
-    }
-    
+    /* El contenedor de login */
     .login-container {
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.95) !important;
         border-radius: 20px;
         padding: 40px;
         box-shadow: 0 20px 40px rgba(180, 38, 65, 0.2);
@@ -176,21 +158,21 @@ def mostrar_login():
         max-width: 600px;
     }
     
-    /* Personalizar el botón */
+    /* Botón personalizado */
     .stButton > button {
-        background: linear-gradient(45deg, #b42641 0%, #ffc331 100%);
-        border: none;
-        border-radius: 25px;
-        padding: 12px 30px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        color: white;
+        background: linear-gradient(45deg, #b42641 0%, #ffc331 100%) !important;
+        border: none !important;
+        border-radius: 25px !important;
+        padding: 12px 30px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        color: white !important;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(180, 38, 65, 0.3);
-        background: linear-gradient(45deg, #a0213a 0%, #e6b02e 100%);
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 20px rgba(180, 38, 65, 0.3) !important;
+        background: linear-gradient(45deg, #a0213a 0%, #e6b02e 100%) !important;
     }
     
     /* Efecto hover en el contenedor */
@@ -202,9 +184,7 @@ def mostrar_login():
     </style>
     """, unsafe_allow_html=True)
     
-    # Sin espacios superiores ya que eliminamos el header
-    
-    # Centrar el contenido directamente
+    # Centrar el contenido
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
