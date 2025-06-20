@@ -308,8 +308,8 @@ def mostrar_login():
     }
     
     .content-text h1 {
-        color: rgba(180, 38, 65, 1) !important;
-        text-shadow: 0 4px 8px rgba(255, 195, 49, 1) !important;
+        color: rgba(139, 30, 53, 1) !important;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
         margin-bottom: 25px !important;
         font-weight: 700 !important;
         font-size: 36px !important;
@@ -317,8 +317,8 @@ def mostrar_login():
     }
     
     .content-text p {
-        color: rgba(180, 38, 65, 1) !important;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+        color: rgba(139, 30, 53, 1) !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
     
     /* Asegurar que todos los contenidos estén por encima del efecto de brillo */
