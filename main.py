@@ -164,22 +164,9 @@ def mostrar_login():
     }
     
     .stApp {
-        background: #ffffff;
-        position: relative;
-        min-height: 100vh !important;
-        overflow: hidden;
-    }
-    
-    .stApp::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
         background: 
             radial-gradient(ellipse 1200px 800px at 0% 100%, 
-                rgba(180, 38, 65, 0.1) 0%, 
+                rgba(180, 38, 65, 0.12) 0%, 
                 transparent 50%),
             radial-gradient(ellipse 1000px 600px at 100% 0%, 
                 rgba(255, 195, 49, 0.15) 0%, 
@@ -189,41 +176,33 @@ def mostrar_login():
                 transparent 50%),
             radial-gradient(ellipse 600px 300px at 80% 20%, 
                 rgba(255, 195, 49, 0.12) 0%, 
-                transparent 50%);
-        animation: waveFlow 25s ease-in-out infinite;
-        z-index: -1;
-    }   
-
-    .stApp::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: 
+                transparent 50%),
             radial-gradient(ellipse 700px 500px at 60% 30%, 
                 rgba(180, 38, 65, 0.06) 0%, 
                 transparent 40%),
             radial-gradient(ellipse 900px 400px at 40% 70%, 
                 rgba(255, 195, 49, 0.08) 0%, 
-                transparent 40%);
-        animation: waveFlow 30s ease-in-out infinite reverse;
-        z-index: -1;
-    }        
+                transparent 40%),
+            #ffffff !important;
+        background-size: 150% 150%, 120% 120%, 130% 130%, 110% 110%, 140% 140%, 125% 125%, 100% 100% !important;
+        animation: waveFlow 25s ease-in-out infinite !important;
+        min-height: 100vh !important;
+    }
+     
+    
     
     @keyframes waveFlow {
         0%, 100% {
-            transform: translateX(0%) translateY(0%) rotate(0deg) scale(1);
+            background-position: 0% 0%, 100% 0%, 20% 80%, 80% 20%, 60% 30%, 40% 70%, 0% 0%;
         }
         25% {
-            transform: translateX(5%) translateY(-2%) rotate(1deg) scale(1.05);
+            background-position: 5% 5%, 95% 5%, 25% 75%, 75% 25%, 65% 25%, 35% 75%, 0% 0%;
         }
         50% {
-            transform: translateX(-3%) translateY(3%) rotate(-0.5deg) scale(0.95);
+            background-position: -5% 10%, 105% 10%, 15% 85%, 85% 15%, 55% 35%, 45% 65%, 0% 0%;
         }
         75% {
-            transform: translateX(2%) translateY(-1%) rotate(0.5deg) scale(1.02);
+            background-position: 2% -5%, 98% -5%, 22% 78%, 78% 22%, 62% 28%, 38% 72%, 0% 0%;
         }
     }
                       
