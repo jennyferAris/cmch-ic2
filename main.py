@@ -16,7 +16,7 @@ from rendimiento_equipo import mostrar_rendimiento_equipo
 
 # CONFIGURACIÓN CRÍTICA - AL INICIO DEL ARCHIVO
 st.set_page_config(
-    page_title="MEDIFLOW - Login",
+    page_title="MEDIFLOW",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="collapsed"
