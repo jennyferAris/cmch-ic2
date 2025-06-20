@@ -38,10 +38,84 @@ st.markdown("""
     .main > div:first-child {
         display: none !important;
     }
+    
+    /* CSS actualizado para Sidebar más ancho */
+    [data-testid="stSidebar"] {
+        width: 400px !important;
+        min-width: 400px !important;
+    }
+
+    [data-testid="stSidebar"] > div {
+        width: 400px !important;
+        min-width: 400px !important;
+    }
+
+    [data-testid="stSidebar"] .block-container {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+
+    /* Ajustar el contenido principal */
+    .main .block-container {
+        padding-left: 2rem !important;
+        max-width: none !important;
+    }
+
+    /* Mejorar el option_menu específicamente */
+    .nav-pills {
+        --bs-nav-pills-border-radius: 10px;
+    }
+
+    .nav-pills .nav-link {
+        padding: 15px 20px !important;
+        margin-bottom: 10px !important;
+        border-radius: 12px !important;
+        font-size: 16px !important;
+        font-weight: 500 !important;
+        display: flex !important;
+        align-items: center !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .nav-pills .nav-link.active {
+        background-color: #DC143C !important;
+        color: white !important;
+        font-weight: 600 !important;
+        box-shadow: 0 6px 20px rgba(220, 20, 60, 0.4) !important;
+        transform: translateX(8px) !important;
+    }
+
+    .nav-pills .nav-link:not(.active) {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: rgba(255, 255, 255, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .nav-pills .nav-link:not(.active):hover {
+        background-color: rgba(220, 20, 60, 0.1) !important;
+        color: #DC143C !important;
+        transform: translateX(5px) !important;
+        border-color: rgba(220, 20, 60, 0.3) !important;
+    }
+
+    /* Mejorar los iconos del menú */
+    .nav-link svg {
+        margin-right: 15px !important;
+        font-size: 20px !important;
+        width: 20px !important;
+        height: 20px !important;
+    }
+
+    /* Título del menú */
+    .nav-pills-header {
+        color: white !important;
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        margin-bottom: 20px !important;
+        padding: 0 10px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
-
-
 
 # Función para cargar roles desde secrets
 @st.cache_data
@@ -108,7 +182,6 @@ def obtener_iconos_menu(menus):
         "Mis Reportes": "file-person"
     }
     return [iconos.get(menu, "circle") for menu in menus]
-
 
 # Función para mostrar la pantalla de login
 def mostrar_login():
@@ -189,8 +262,6 @@ def mostrar_login():
         min-height: 100vh !important;
     }
      
-    
-    
     @keyframes waveFlow {
         0%, 100% { 
             background-position: 0% 0%, 100% 0%, 70% 60%, 30% 40%, 0% 0%, 0% 0%; 
@@ -203,7 +274,6 @@ def mostrar_login():
         }
     }
                       
-       
     /* Efecto de brillo */
     .login-container::before {
         content: '';
@@ -341,10 +411,7 @@ def mostrar_login():
     col1, col2, col3 = st.columns([1, 2, 1])
          
     with col2:
-        #st.markdown('<div class="login-container">', unsafe_allow_html=True)
-                 
         # Logo con tu código específico para centrar
-        #st.markdown('<div class="logo-container">', unsafe_allow_html=True)
         try:
             # Usar columnas internas para centrar la imagen
             img_col1, img_col2, img_col3 = st.columns([1.3, 2, 1.5])
@@ -352,7 +419,6 @@ def mostrar_login():
                 st.image("static/MEDIFLOW LOGO.png", width=260)
         except:
             st.error("No se pudo cargar el logo")
-        st.markdown('</div>', unsafe_allow_html=True)
                  
         # Contenido elegante
         st.markdown("""
@@ -372,8 +438,6 @@ def mostrar_login():
                      use_container_width=True,
                      help="Haz clic para iniciar sesión con tu cuenta de Google"):
             st.login("google")
-                 
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # Verificar si el usuario está logueado
 if not st.user.is_logged_in:
@@ -415,7 +479,7 @@ st.title("🏥 PLATAFORMA DE INGENIERÍA CLÍNICA")
 
 # Sidebar con información del usuario y menú
 with st.sidebar:
-    # Información del usuario con estilo Cayetano
+    # Información del usuario con estilo Cayetano (SIN COLUMNAS)
     st.markdown(f"""
     <div style="
         background: linear-gradient(135deg, #B71C1C 0%, #DC143C 100%);
@@ -425,6 +489,7 @@ with st.sidebar:
         box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
         text-align: center;
         color: white;
+        width: 100%;
     ">
         <div style="
             background-color: rgba(255, 255, 255, 0.2);
@@ -470,16 +535,22 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # Menú principal
+    # Menú principal (SIN COLUMNAS)
     menu = option_menu(
         menu_title="Menú Principal",
         options=menus_usuario,
         icons=iconos_menu,
         default_index=0,
         styles={
-            "container": {"padding": "0!important"},
+            "container": {"padding": "0!important", "width": "100%"},
             "icon": {"color": "#DC143C", "font-size": "18px"},
-            "nav-link": {"font-size": "16px", "text-align": "left", "margin": "0px"},
+            "nav-link": {
+                "font-size": "16px", 
+                "text-align": "left", 
+                "margin": "0px",
+                "padding": "15px 20px",
+                "width": "100%"
+            },
             "nav-link-selected": {"background-color": "#DC143C"},
         }
     )
@@ -576,13 +647,8 @@ elif menu == "Asignación Tareas" and rol_nivel >= 2:
     
     mostrar_modulo_asignacion()
 
-
 elif menu == "Gestión Usuarios":
     mostrar_modulo_gestion_usuarios()
-
-#elif menu == "Cronograma" and rol_nivel >= 5:
-    #st.title("📅 Cronograma de Mantenimientos")
-    #st.info("📋 Módulo en desarrollo - Programación de mantenimientos preventivos")
 
 elif menu == "Mantenimientos":
     st.title("🔧 Gestión de Mantenimientos")
