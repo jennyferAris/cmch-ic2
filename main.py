@@ -164,49 +164,23 @@ def mostrar_login():
     }
     
     .stApp {
-        background: linear-gradient(135deg, 
+        background: linear-gradient(to bottom right,  
             #ffffff 0%, 
-            rgba(255, 195, 49, 0.3) 25%, 
-            rgba(180, 38, 65, 0.2) 50%, 
-            rgba(255, 195, 49, 0.4) 75%, 
+            rgba(255, 195, 49, 0.2) 30%, 
+            rgba(180, 38, 65, 0.15) 60%, 
             #ffffff 100%) !important;
-        background-size: 400% 400% !important;
-        animation: gradient 20s ease infinite !important;
+        background-size: 300% 300% !important;
+        animation: gradient 30s ease infinite !important;
         min-height: 100vh !important;
-        position: relative !important;
     }
-    
-    /* Agregar capas adicionales para el efecto ondulado */
-    .stApp::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: radial-gradient(ellipse at 20% 30%, 
-            rgba(180, 38, 65, 0.1) 0%, 
-            transparent 50%),
-        radial-gradient(ellipse at 80% 70%, 
-            rgba(255, 195, 49, 0.15) 0%, 
-            transparent 50%),
-        radial-gradient(ellipse at 40% 80%, 
-            rgba(180, 38, 65, 0.08) 0%, 
-            transparent 50%);
-        animation: float 25s ease-in-out infinite;
-        z-index: -1;
-    }           
+             
     
     @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        33% { transform: translateY(-20px) rotate(1deg); }
-        66% { transform: translateY(10px) rotate(-1deg); }
+        0% { background-position: 0% 0%; }
+        25% { background-position: 100% 0%; }
+        50% { background-position: 100% 100%; }
+        75% { background-position: 0% 100%; }
+        100% { background-position: 0% 0%; }
     }
                            
     /* Asegurar que el contenedor principal sea transparente */
