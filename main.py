@@ -165,44 +165,41 @@ def mostrar_login():
     
     .stApp {
         background: 
-            radial-gradient(ellipse 1200px 800px at 0% 100%, 
-                rgba(180, 38, 65, 0.12) 0%, 
+            radial-gradient(ellipse 800px 600px at 15% 85%, 
+                rgba(180, 38, 65, 0.25) 0%, 
+                rgba(180, 38, 65, 0.1) 30%,
+                transparent 60%),
+            radial-gradient(ellipse 900px 500px at 85% 15%, 
+                rgba(255, 195, 49, 0.3) 0%, 
+                rgba(255, 195, 49, 0.15) 30%,
+                transparent 60%),
+            radial-gradient(ellipse 600px 800px at 70% 60%, 
+                rgba(180, 38, 65, 0.15) 0%, 
                 transparent 50%),
-            radial-gradient(ellipse 1000px 600px at 100% 0%, 
-                rgba(255, 195, 49, 0.15) 0%, 
+            radial-gradient(ellipse 700px 400px at 30% 40%, 
+                rgba(255, 195, 49, 0.2) 0%, 
                 transparent 50%),
-            radial-gradient(ellipse 800px 400px at 20% 80%, 
-                rgba(180, 38, 65, 0.08) 0%, 
-                transparent 50%),
-            radial-gradient(ellipse 600px 300px at 80% 20%, 
-                rgba(255, 195, 49, 0.12) 0%, 
-                transparent 50%),
-            radial-gradient(ellipse 700px 500px at 60% 30%, 
-                rgba(180, 38, 65, 0.06) 0%, 
-                transparent 40%),
-            radial-gradient(ellipse 900px 400px at 40% 70%, 
-                rgba(255, 195, 49, 0.08) 0%, 
-                transparent 40%),
+            linear-gradient(135deg, 
+                #ffffff 0%, 
+                rgba(255, 195, 49, 0.08) 50%, 
+                #ffffff 100%),
             #ffffff !important;
-        background-size: 150% 150%, 120% 120%, 130% 130%, 110% 110%, 140% 140%, 125% 125%, 100% 100% !important;
-        animation: waveFlow 25s ease-in-out infinite !important;
+        background-size: 120% 120%, 130% 130%, 110% 110%, 115% 115%, 100% 100%, 100% 100% !important;
+        animation: waveFlow 20s ease-in-out infinite !important;
         min-height: 100vh !important;
     }
      
     
     
     @keyframes waveFlow {
-        0%, 100% {
-            background-position: 0% 0%, 100% 0%, 20% 80%, 80% 20%, 60% 30%, 40% 70%, 0% 0%;
+        0%, 100% { 
+            background-position: 0% 0%, 100% 0%, 70% 60%, 30% 40%, 0% 0%, 0% 0%; 
         }
-        25% {
-            background-position: 5% 5%, 95% 5%, 25% 75%, 75% 25%, 65% 25%, 35% 75%, 0% 0%;
+        33% { 
+            background-position: 10% 15%, 90% 10%, 60% 50%, 40% 30%, 0% 0%, 0% 0%; 
         }
-        50% {
-            background-position: -5% 10%, 105% 10%, 15% 85%, 85% 15%, 55% 35%, 45% 65%, 0% 0%;
-        }
-        75% {
-            background-position: 2% -5%, 98% -5%, 22% 78%, 78% 22%, 62% 28%, 38% 72%, 0% 0%;
+        66% { 
+            background-position: 5% 25%, 95% 5%, 80% 70%, 20% 50%, 0% 0%, 0% 0%; 
         }
     }
                       
