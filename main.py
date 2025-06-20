@@ -305,7 +305,7 @@ def mostrar_login():
     }
     
     .content-text p {
-        color: rgba(255, 255, 255, 0.9) !important;
+        color: rgba(180, 38, 65, 1) !important;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
     }
     
