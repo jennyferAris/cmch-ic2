@@ -164,33 +164,69 @@ def mostrar_login():
     }
     
     .stApp {
+        background: #ffffff;
+        position: relative;
+        min-height: 100vh !important;
+        overflow: hidden;
+    }
+    
+    .stApp::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         background: 
-            radial-gradient(ellipse 800px 600px at 15% 25%, 
-                rgba(180, 38, 65, 0.2) 0%, 
-                transparent 50%),
-            radial-gradient(ellipse 1000px 700px at 85% 75%, 
-                rgba(255, 195, 49, 0.18) 0%, 
-                transparent 50%),
-            radial-gradient(ellipse 600px 500px at 45% 65%, 
+            radial-gradient(ellipse 1200px 800px at 0% 100%, 
                 rgba(180, 38, 65, 0.1) 0%, 
                 transparent 50%),
-            radial-gradient(ellipse 900px 600px at 70% 35%, 
-                rgba(255, 195, 49, 0.12) 0%, 
+            radial-gradient(ellipse 1000px 600px at 100% 0%, 
+                rgba(255, 195, 49, 0.15) 0%, 
                 transparent 50%),
-            #ffffff !important;
-        min-height: 100vh !important;
-        animation: softFloat 30s ease-in-out infinite !important;
-    }
-             
+            radial-gradient(ellipse 800px 400px at 20% 80%, 
+                rgba(180, 38, 65, 0.08) 0%, 
+                transparent 50%),
+            radial-gradient(ellipse 600px 300px at 80% 20%, 
+                rgba(255, 195, 49, 0.12) 0%, 
+                transparent 50%);
+        animation: waveFlow 25s ease-in-out infinite;
+        z-index: -1;
+    }   
+
+    .stApp::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(ellipse 700px 500px at 60% 30%, 
+                rgba(180, 38, 65, 0.06) 0%, 
+                transparent 40%),
+            radial-gradient(ellipse 900px 400px at 40% 70%, 
+                rgba(255, 195, 49, 0.08) 0%, 
+                transparent 40%);
+        animation: waveFlow 30s ease-in-out infinite reverse;
+        z-index: -1;
+    }        
     
-    @keyframes softFloat {
-        0%, 100% { 
-            background-position: 0% 0%, 100% 100%, 50% 50%, 70% 35%;
+    @keyframes waveFlow {
+        0%, 100% {
+            transform: translateX(0%) translateY(0%) rotate(0deg) scale(1);
         }
-        50% { 
-            background-position: 20% 10%, 80% 90%, 30% 70%, 50% 55%;
+        25% {
+            transform: translateX(5%) translateY(-2%) rotate(1deg) scale(1.05);
+        }
+        50% {
+            transform: translateX(-3%) translateY(3%) rotate(-0.5deg) scale(0.95);
+        }
+        75% {
+            transform: translateX(2%) translateY(-1%) rotate(0.5deg) scale(1.02);
         }
     }
+                      
        
     /* Efecto de brillo */
     .login-container::before {
