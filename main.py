@@ -164,32 +164,34 @@ def mostrar_login():
     }
     
     .stApp {
-        background: linear-gradient(to bottom right,  
-            #ffffff 0%, 
-            rgba(255, 195, 49, 0.2) 30%, 
-            rgba(180, 38, 65, 0.15) 60%, 
-            #ffffff 100%) !important;
-        background-size: 300% 300% !important;
-        animation: gradient 30s ease infinite !important;
+        background: 
+            radial-gradient(ellipse 800px 600px at 15% 25%, 
+                rgba(180, 38, 65, 0.2) 0%, 
+                transparent 50%),
+            radial-gradient(ellipse 1000px 700px at 85% 75%, 
+                rgba(255, 195, 49, 0.18) 0%, 
+                transparent 50%),
+            radial-gradient(ellipse 600px 500px at 45% 65%, 
+                rgba(180, 38, 65, 0.1) 0%, 
+                transparent 50%),
+            radial-gradient(ellipse 900px 600px at 70% 35%, 
+                rgba(255, 195, 49, 0.12) 0%, 
+                transparent 50%),
+            #ffffff !important;
         min-height: 100vh !important;
+        animation: softFloat 30s ease-in-out infinite !important;
     }
              
     
-    @keyframes gradient {
-        0% { background-position: 0% 0%; }
-        25% { background-position: 100% 0%; }
-        50% { background-position: 100% 100%; }
-        75% { background-position: 0% 100%; }
-        100% { background-position: 0% 0%; }
+    @keyframes softFloat {
+        0%, 100% { 
+            background-position: 0% 0%, 100% 100%, 50% 50%, 70% 35%;
+        }
+        50% { 
+            background-position: 20% 10%, 80% 90%, 30% 70%, 50% 55%;
+        }
     }
-                           
-    /* Asegurar que el contenedor principal sea transparente */
-    .block-container {
-        background: transparent !important;
-        padding-top: 4rem !important;
-    }
-    
-    
+       
     /* Efecto de brillo */
     .login-container::before {
         content: '';
