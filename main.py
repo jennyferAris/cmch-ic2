@@ -296,7 +296,7 @@ def mostrar_login():
     }
     
     .content-text h1 {
-        color: white !important;
+        color: rgba(180, 38, 65, 1) !important;
         text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
         margin-bottom: 25px !important;
         font-weight: 700 !important;
