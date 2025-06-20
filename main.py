@@ -163,12 +163,11 @@ def mostrar_login():
         box-shadow: none !important;
     }
     
-    /* Fondo con gradiente animado */
     .stApp {
-        background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c) !important;
-        background-size: 400% 400% !important;
-        animation: gradient 15s ease infinite !important;
-        min-height: 100vh !important;
+    background: linear-gradient(-45deg, #b42641, #d63859, #ffc331, #ffffff, #ffc331, #b42641) !important;
+    background-size: 400% 400% !important;
+    animation: gradient 15s ease infinite !important;
+    min-height: 100vh !important;
     }
     
     @keyframes gradient {
