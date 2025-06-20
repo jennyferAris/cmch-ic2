@@ -333,7 +333,7 @@ def mostrar_login():
         #st.markdown('<div class="logo-container">', unsafe_allow_html=True)
         try:
             # Usar columnas internas para centrar la imagen
-            img_col1, img_col2, img_col3 = st.columns([1.5, 2, 1.5])
+            img_col1, img_col2, img_col3 = st.columns([1.3, 2, 1.5])
             with img_col2:
                 st.image("static/MEDIFLOW LOGO.png", width=220)
         except:
