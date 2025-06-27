@@ -475,7 +475,7 @@ menus_usuario = obtener_menus_por_rol(rol_nivel)
 iconos_menu = obtener_iconos_menu(menus_usuario)
 
 # Título principal
-st.title("🏥 PLATAFORMA DE INGENIERÍA CLÍNICA")
+st.title("🏥 MEDIFLOW: Plataforma de Trazabilidad y Gestión Clínica")
 
 # Sidebar con información del usuario y menú
 with st.sidebar:
