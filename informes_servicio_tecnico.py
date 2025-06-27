@@ -22,6 +22,31 @@ def configurar_drive_api():
     drive_service = build('drive', 'v3', credentials=credenciales)
     return drive_service
 
+# Función para escribir en celdas de forma segura
+def escribir_celda_segura(ws, celda, valor, fuente=None):
+    """Escribe en una celda manejando celdas fusionadas"""
+    try:
+        # Verificar si la celda está fusionada
+        cell = ws[celda]
+        if hasattr(cell, 'coordinate'):
+            # Buscar si esta celda es parte de un rango fusionado
+            for merged_range in ws.merged_cells.ranges:
+                if cell.coordinate in merged_range:
+                    # Es una celda fusionada, usar la celda superior izquierda
+                    top_left = merged_range.start_cell
+                    top_left.value = valor
+                    if fuente:
+                        top_left.font = fuente
+                    return
+        
+        # No está fusionada, escribir normalmente
+        cell.value = valor
+        if fuente:
+            cell.font = fuente
+            
+    except Exception as e:
+        st.warning(f"No se pudo escribir en la celda {celda}: {e}")
+
 # Función para crear copia, llenar datos y subir
 def crear_informe_completo(drive_service, plantilla_id, carpeta_destino_id, datos_formulario):
     """Crea copia de plantilla, llena datos y sube archivo final a Drive"""
@@ -67,48 +92,31 @@ def crear_informe_completo(drive_service, plantilla_id, carpeta_destino_id, dato
         ws = wb.active
         fuente = Font(name="Albert Sans", size=8)
 
-        # Llenar todas las celdas con los datos del formulario
-        ws["J6"] = datos_formulario['codigo_informe']
-        ws["J6"].font = fuente
-        ws["C5"] = datos_formulario['sede']
-        ws["C5"].font = fuente
-        ws["C6"] = datos_formulario['upss']
-        ws["C6"].font = fuente
-        ws["C7"] = datos_formulario['tipo_servicio']
-        ws["C7"].font = fuente
-        ws["F10"] = datos_formulario['equipo_nombre']
-        ws["F10"].font = fuente
-        ws["I10"] = datos_formulario['marca']
-        ws["I10"].font = fuente
-        ws["K10"] = datos_formulario['modelo']
-        ws["K10"].font = fuente
-        ws["M10"] = datos_formulario['serie']
-        ws["M10"].font = fuente
-        ws["B12"] = datos_formulario['inicio_servicio']
-        ws["B12"].font = fuente
-        ws["D12"] = datos_formulario['fin_servicio']
-        ws["D12"].font = fuente
-        ws["F12"] = datos_formulario['estado']
-        ws["F12"].font = fuente
-        ws["B15"] = datos_formulario['inconveniente']
-        ws["B15"].font = fuente
-        ws["B20"] = datos_formulario['actividades']
-        ws["B20"].font = fuente
-        ws["B29"] = datos_formulario['resultado']
-        ws["B29"].font = fuente
+        # Llenar datos usando la función segura
+        escribir_celda_segura(ws, "J6", datos_formulario['codigo_informe'], fuente)
+        escribir_celda_segura(ws, "C5", datos_formulario['sede'], fuente)
+        escribir_celda_segura(ws, "C6", datos_formulario['upss'], fuente)
+        escribir_celda_segura(ws, "C7", datos_formulario['tipo_servicio'], fuente)
+        escribir_celda_segura(ws, "F10", datos_formulario['equipo_nombre'], fuente)
+        escribir_celda_segura(ws, "I10", datos_formulario['marca'], fuente)
+        escribir_celda_segura(ws, "K10", datos_formulario['modelo'], fuente)
+        escribir_celda_segura(ws, "M10", datos_formulario['serie'], fuente)
+        escribir_celda_segura(ws, "B12", datos_formulario['inicio_servicio'], fuente)
+        escribir_celda_segura(ws, "D12", datos_formulario['fin_servicio'], fuente)
+        escribir_celda_segura(ws, "F12", datos_formulario['estado'], fuente)
+        escribir_celda_segura(ws, "B15", datos_formulario['inconveniente'], fuente)
+        escribir_celda_segura(ws, "B20", datos_formulario['actividades'], fuente)
+        escribir_celda_segura(ws, "B29", datos_formulario['resultado'], fuente)
         
         # Campos adicionales si existen
         if datos_formulario.get('tecnico_responsable'):
-            ws["B35"] = f"Técnico: {datos_formulario['tecnico_responsable']}"
-            ws["B35"].font = fuente
+            escribir_celda_segura(ws, "B35", f"Técnico: {datos_formulario['tecnico_responsable']}", fuente)
         
         if datos_formulario.get('repuestos_utilizados'):
-            ws["B37"] = f"Repuestos: {datos_formulario['repuestos_utilizados']}"
-            ws["B37"].font = fuente
+            escribir_celda_segura(ws, "B37", f"Repuestos: {datos_formulario['repuestos_utilizados']}", fuente)
             
         if datos_formulario.get('costo_servicio', 0) > 0:
-            ws["B39"] = f"Costo: S/ {datos_formulario['costo_servicio']:.2f}"
-            ws["B39"].font = fuente
+            escribir_celda_segura(ws, "B39", f"Costo: S/ {datos_formulario['costo_servicio']:.2f}", fuente)
         
         # 4. Guardar archivo editado
         archivo_editado = io.BytesIO()
@@ -131,7 +139,42 @@ def crear_informe_completo(drive_service, plantilla_id, carpeta_destino_id, dato
         
     except Exception as e:
         st.error(f"Error creando informe: {e}")
+        # Mostrar más detalles para debugging
+        import traceback
+        st.error(f"Detalles del error: {traceback.format_exc()}")
         return None, None
+
+# Función alternativa para debugging - inspeccionar celdas fusionadas
+def inspeccionar_plantilla(drive_service, plantilla_id):
+    """Función para inspeccionar qué celdas están fusionadas en la plantilla"""
+    try:
+        # Crear copia temporal
+        copy_metadata = {'name': 'temp_inspection'}
+        copia = drive_service.files().copy(fileId=plantilla_id, body=copy_metadata).execute()
+        copia_id = copia['id']
+        
+        # Descargar
+        request = drive_service.files().get_media(fileId=copia_id)
+        file_io = io.BytesIO()
+        downloader = MediaIoBaseDownload(file_io, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+        file_io.seek(0)
+        
+        # Inspeccionar
+        wb = openpyxl.load_workbook(file_io)
+        ws = wb.active
+        
+        st.write("### 🔍 Celdas fusionadas encontradas:")
+        for merged_range in ws.merged_cells.ranges:
+            st.write(f"- Rango fusionado: {merged_range}")
+            
+        # Eliminar copia temporal
+        drive_service.files().delete(fileId=copia_id).execute()
+        
+    except Exception as e:
+        st.error(f"Error inspeccionando plantilla: {e}")
 
 # Cargar datos desde Google Sheets
 @st.cache_data
@@ -159,6 +202,11 @@ def mostrar_informes_servicio_tecnico():
 
     # Configurar Google Drive
     drive_service = configurar_drive_api()
+
+    # Botón para debugging (opcional - solo para diagnosticar)
+    if st.checkbox("🔧 Modo Debug - Inspeccionar Plantilla"):
+        if st.button("Inspeccionar celdas fusionadas"):
+            inspeccionar_plantilla(drive_service, PLANTILLA_ID)
 
     # Cargar base de datos
     df = cargar_datos()
@@ -247,7 +295,9 @@ def mostrar_informes_servicio_tecnico():
             
             st.success(f"✅ **Equipo encontrado:** {equipo_nombre}")
 
-    # ============== FORMULARIO ==============
+    # ============== RESTO DEL FORMULARIO ==============
+    # [El resto del código del formulario se mantiene igual...]
+    
     st.markdown("### 🏥 Información del Servicio")
     col1, col2 = st.columns(2)
     with col1:
