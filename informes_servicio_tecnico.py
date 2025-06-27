@@ -47,6 +47,29 @@ def escribir_celda_segura(ws, celda, valor, fuente=None):
     except Exception as e:
         st.warning(f"No se pudo escribir en la celda {celda}: {e}")
 
+
+# Función para marcar tipo de servicio con X
+def marcar_tipo_servicio(ws, tipo_servicio, fuente):
+    """Marca con X el tipo de servicio seleccionado"""
+    
+    tipos_servicio_celdas = {
+        "Mantenimiento Correctivo": "G12",  # Celda para "Correctivo"
+        "Mantenimiento Preventivo": "I12",  # Celda para "Preventivo" 
+        "Inspección": "K12",                # Celda para "Inspección"
+        "Otro": "M12"                       # Celda para "Otro"
+    }
+    
+    # Limpiar todas las celdas primero
+    for celda in tipos_servicio_celdas.values():
+        escribir_celda_segura(ws, celda, "", fuente)
+    
+    # Marcar con X el tipo seleccionado
+    if tipo_servicio in tipos_servicio_celdas:
+        celda_seleccionada = tipos_servicio_celdas[tipo_servicio]
+        escribir_celda_segura(ws, celda_seleccionada, "X", fuente)
+
+
+
 # Función para crear copia, llenar datos y subir
 def crear_informe_completo(drive_service, plantilla_id, carpeta_destino_id, datos_formulario):
     """Crea copia de plantilla, llena datos y sube archivo final a Drive"""
