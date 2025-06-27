@@ -557,7 +557,7 @@ with st.sidebar:
 
 # Contenido principal según la selección del menú
 if menu == "Inicio":
-    st.markdown(f"## 🎯 Bienvenido, {rol_nombre}")
+    st.markdown(f"## 👋 Hola, {name}")
     
     # Mensaje personalizado según el rol
     if rol_nivel == 5:  # Ingeniero Clínico
