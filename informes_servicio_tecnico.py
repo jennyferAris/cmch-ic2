@@ -119,7 +119,7 @@ def crear_informe_completo(drive_service, plantilla_id, carpeta_destino_id, dato
         escribir_celda_segura(ws, "J6", datos_formulario['codigo_informe'], fuente)
         escribir_celda_segura(ws, "C5", datos_formulario['sede'], fuente)
         escribir_celda_segura(ws, "C6", datos_formulario['upss'], fuente)
-        escribir_celda_segura(ws, "C7", datos_formulario['tipo_servicio'], fuente)
+        marcar_tipo_servicio(ws, datos_formulario['tipo_servicio'], fuente)
         escribir_celda_segura(ws, "F10", datos_formulario['equipo_nombre'], fuente)
         escribir_celda_segura(ws, "I10", datos_formulario['marca'], fuente)
         escribir_celda_segura(ws, "K10", datos_formulario['modelo'], fuente)
