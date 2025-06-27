@@ -10,7 +10,7 @@ from gestion_usuarios import mostrar_modulo_gestion_usuarios
 from dashboard_kpis import mostrar_modulo_dashboard
 from reportes import mostrar_modulo_reportes
 from rendimiento_equipo import mostrar_rendimiento_equipo
-
+from informes_servicio_tecnico import mostrar_informes_servicio_tecnico 
 
 #st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
@@ -174,6 +174,7 @@ def obtener_iconos_menu(menus):
         "Reportar Evento": "exclamation-triangle",
         "Fichas Técnicas": "file-medical",
         "Informes Técnicos": "file-earmark-pdf",  # ← NUEVO ICONO
+        "Informes Servicio Técnico": "wrench-adjustable",
         "Mantenimientos": "tools",
         "Inventario": "box-seam",
         "Gestión Pasantes": "person-badge",
@@ -681,7 +682,14 @@ elif menu == "Mis Reportes":
 
 elif menu == "Informes Servicio Técnico":
     st.title("📑 Informes de Servicio Técnico")
-    st.info("🛠️ Módulo en desarrollo - Informes de servicio técnico")
+    # Pasar información del rol al módulo de informes de servicio
+    if 'name' not in st.session_state:
+        st.session_state.name = name
+    if 'rol_nombre' not in st.session_state:
+        st.session_state.rol_nombre = rol_nombre
+    if 'email' not in st.session_state:
+        st.session_state.email = email
+    mostrar_informes_servicio_tecnico()
 
 elif menu == "Gestión Pasantes":
     st.title("👥 Gestión de Pasantes")
