@@ -155,7 +155,7 @@ def mostrar_gestion_usuarios():
             col3, col4 = st.columns(2)
             
             with col3:
-                areas_asignadas = st.selectbox(
+                areas_asignadas = st.multiselect(
                     "🏢 Área de Trabajo",
                     ["UCI", "Quirófanos", "Emergencia", "Hospitalización", "Imagenología", "Laboratorio", "Mantenimiento", "Administración"],
                     help="Selecciona una o más áreas donde trabajará el usuario"
