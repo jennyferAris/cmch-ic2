@@ -155,10 +155,10 @@ def mostrar_gestion_usuarios():
             col3, col4 = st.columns(2)
             
             with col3:
-                area_asignada = st.selectbox(
+                areas_asignadas = st.selectbox(
                     "🏢 Área de Trabajo",
                     ["UCI", "Quirófanos", "Emergencia", "Hospitalización", "Imagenología", "Laboratorio", "Mantenimiento", "Administración"],
-                    help="Área principal donde trabajará"
+                    help="Selecciona una o más áreas donde trabajará el usuario"
                 )
                 
                 turno = st.selectbox(
@@ -216,7 +216,7 @@ def mostrar_gestion_usuarios():
                         nivel_usuario_nuevo,
                         funciones_seleccionadas,
                         {
-                            "area": area_asignada,
+                            "area": areas_asignadas,
                             "turno": turno,
                             "telefono": telefono,
                             "fecha_inicio": fecha_inicio.strftime('%d/%m/%Y'),
@@ -256,13 +256,17 @@ def mostrar_gestion_usuarios():
             areas_usuarios = set()
             for info in roles_mostrar.values():
                 if len(info) > 3 and isinstance(info[3], dict):
-                    areas_usuarios.add(info[3].get('area', 'Sin área'))
+                    areas_usuario = info[3].get('areas', info[3].get('area', []))
+                    if isinstance(areas_usuario, list):
+                        areas_usuarios.update(areas_usuario)
+                    else:
+                        areas_usuarios.add(areas_usuario)   
             
             filtro_area = st.selectbox(
                 "🏢 Filtrar por Área",
                 ["Todas"] + sorted(list(areas_usuarios))
             )
-        
+
         with col3:
             buscar_texto = st.text_input("🔍 Buscar usuario", placeholder="Nombre o email...")
         
@@ -280,9 +284,13 @@ def mostrar_gestion_usuarios():
                 continue
                 
             if filtro_area != "Todas":
-                area_usuario = extra_info.get('area', 'Sin área')
-                if area_usuario != filtro_area:
-                    continue
+                areas_usuario = extra_info.get('areas', extra_info.get('area', []))
+                if isinstance(areas_usuario, list):
+                    if filtro_area not in areas_usuario:
+                        continue
+                else:
+                    if areas_usuario != filtro_area:
+                        continue
             
             if buscar_texto:
                 if (buscar_texto.lower() not in nombre.lower() and 
@@ -315,7 +323,13 @@ def mostrar_gestion_usuarios():
                 
                 with col2:
                     if isinstance(extra_info, dict):
-                        st.write(f"**🏢 Área:** {extra_info.get('area', 'N/A')}")
+                        areas_usuario = extra_info.get('areas', extra_info.get('area', []))
+                        if isinstance(areas_usuario, list):
+                            areas_texto = ', '.join(areas_usuario) if areas_usuario else 'N/A'
+                        else:
+                            areas_texto = areas_usuario if areas_usuario else 'N/A'
+                        
+                        st.write(f"**🏢 Áreas:** {areas_texto}")
                         st.write(f"**🕐 Turno:** {extra_info.get('turno', 'N/A')}")
                         st.write(f"**📱 Teléfono:** {extra_info.get('telefono', 'N/A')}")
                         st.write(f"**📅 Inicio:** {extra_info.get('fecha_inicio', 'N/A')}")
@@ -388,13 +402,20 @@ def mostrar_gestion_usuarios():
                         "⚙️ Funciones",
                         funciones_disponibles,
                         default=funciones_actuales
-                    )
-                
+                    )                
+
                 with col2:
-                    area_edit = st.selectbox(
-                        "🏢 Área",
+
+                    # Obtener áreas actuales (con compatibilidad hacia atrás)
+                    areas_actuales = extra_actual.get('areas', [])
+                    if not areas_actuales and extra_actual.get('area'):
+                        areas_actuales = [extra_actual.get('area')]
+
+                    areas_edit = st.multiselect(
+                        "🏢 Áreas",
                         ["UCI", "Quirófanos", "Emergencia", "Hospitalización", "Imagenología", "Laboratorio", "Mantenimiento", "Administración"],
-                        index=["UCI", "Quirófanos", "Emergencia", "Hospitalización", "Imagenología", "Laboratorio", "Mantenimiento", "Administración"].index(extra_actual.get('area', 'UCI'))
+                        default=areas_actuales,
+                        help="Selecciona una o más áreas donde trabajará el usuario"
                     )
                     
                     turno_edit = st.selectbox(
@@ -421,7 +442,7 @@ def mostrar_gestion_usuarios():
                             nivel_edit,
                             funciones_edit,
                             {
-                                "area": area_edit,
+                                "area": areas_edit,
                                 "turno": turno_edit,
                                 "telefono": telefono_edit,
                                 "fecha_inicio": extra_actual.get('fecha_inicio', datetime.now().strftime('%d/%m/%Y')),
