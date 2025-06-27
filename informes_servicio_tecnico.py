@@ -110,7 +110,7 @@ def crear_informe_completo(drive_service, plantilla_id, carpeta_destino_id, dato
         
         # Campos adicionales si existen
         if datos_formulario.get('tecnico_responsable'):
-            escribir_celda_segura(ws, "B35", f"Técnico: {datos_formulario['tecnico_responsable']}", fuente)
+            escribir_celda_segura(ws, "B10", f"Técnico: {datos_formulario['tecnico_responsable']}", fuente)
         
         if datos_formulario.get('repuestos_utilizados'):
             escribir_celda_segura(ws, "B37", f"Repuestos: {datos_formulario['repuestos_utilizados']}", fuente)
