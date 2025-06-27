@@ -152,7 +152,7 @@ def obtener_menus_por_rol(nivel):
     elif nivel == 4:  # Ingeniero Junior
         return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Asignación Tareas", "Reportes", "Escáner QR"]
     elif nivel == 5:  # Ingeniero Clínico (Jefe)
-        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Técnicos", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo"]
+        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo"]
     elif nivel == 6:  # Personal de Salud
         return ["Escáner QR", "Reportar Evento", "Mis Reportes"]
     else:
