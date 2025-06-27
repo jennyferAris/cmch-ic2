@@ -276,7 +276,7 @@ def mostrar_asignacion_tareas():
             
             with col2:
                 # Prioridad
-                prioridad = st.selectbox("⚠️ Prioridad", ["Baja", "Media", "Alta", "Crítica"])
+                prioridad = st.selectbox("⚠️ Prioridad", ["Baja", "Media", "Alta"])
                 
                 # Selección de equipo (opcional)
                 usar_equipo = st.checkbox("🏥 Asignar a equipo específico")
@@ -439,7 +439,7 @@ def mostrar_asignacion_tareas():
                 
                 # Determinar prioridad
                 tarea_texto = tarea.get('Tarea', '')
-                prioridad_emoji = '🔴' if '[Crítica]' in tarea_texto else '🟠' if '[Alta]' in tarea_texto else '🟡' if '[Media]' in tarea_texto else '🟢'
+                prioridad_emoji = '🟠' if '[Alta]' in tarea_texto else '🟡' if '[Media]' in tarea_texto else '🟢'
                 
                 with st.expander(f"{estado_color} {prioridad_emoji} {tarea_texto[:60]}... | Encargado: {tarea.get('Encargado', '')}"):
                     col1, col2 = st.columns(2)
