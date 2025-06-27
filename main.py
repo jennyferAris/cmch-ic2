@@ -708,4 +708,4 @@ if st.sidebar.button("🚪 Cerrar Sesión", type="secondary", use_container_widt
 
 # Footer limpio
 st.markdown("---")
-st.markdown("🏥 **Sistema de Ingeniería Clínica v1.0** | Enfocado en mantenimiento preventivo y gestión técnica")
+st.markdown("🏥 **MEDIFLOW v1.0** | Enfocado en mantenimiento preventivo y gestión técnica")
