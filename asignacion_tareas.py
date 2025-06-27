@@ -542,7 +542,7 @@ def mostrar_asignacion_tareas():
             
             # Resumen de equipos más asignados
             if any(t.get('Nombre_Equipo') for t in tareas):
-                st.subheader("🔧 Equipos Más Asignados")
+                st.subheader("🔧 Equipos Más Atendidos")
                 equipos_tareas = {}
                 for tarea in tareas:
                     if tarea.get('Nombre_Equipo'):
