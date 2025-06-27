@@ -142,7 +142,7 @@ def obtener_menus_por_rol(nivel):
     menus_base = ["Inicio", "Base de Datos"]
     
     if nivel == 0:  # Pasante 0
-        return menus_base + ["Informes Técnicos", "Fichas Técnicas", "Mis Reportes"]
+        return menus_base + ["Informes Técnicos", "Fichas Técnicas", "Informes Servicio Técnico"]
     elif nivel == 1:  # Pasante 1
         return menus_base + ["Mantenimientos", "Informes Técnicos", "Inventario"]
     elif nivel == 2:  # Pasante 2
@@ -678,6 +678,10 @@ elif menu == "Fichas Técnicas":
 elif menu == "Mis Reportes":
     st.title("📊 Mis Reportes")
     st.info("📈 Módulo en desarrollo - Reportes personalizados")
+
+elif menu == "Informes Servicio Técnico":
+    st.title("📑 Informes de Servicio Técnico")
+    st.info("🛠️ Módulo en desarrollo - Informes de servicio técnico")
 
 elif menu == "Gestión Pasantes":
     st.title("👥 Gestión de Pasantes")
