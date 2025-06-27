@@ -174,9 +174,15 @@ def mostrar_gestion_usuarios():
                 )
                 
                 fecha_inicio = st.date_input(
-                    "📅 Fecha de Inicio",
+                    "📅 Fecha de ingreso",
                     value=datetime.now().date(),
                     help="Fecha de incorporación"
+                )
+
+                fecha_salida = st.date_input(
+                    "📅 Fecha de salida",
+                    value=datetime.now().date(),
+                    help="Fecha de salida (opcional, si aplica)"
                 )
             
             comentarios = st.text_area(
@@ -220,6 +226,7 @@ def mostrar_gestion_usuarios():
                             "turno": turno,
                             "telefono": telefono,
                             "fecha_inicio": fecha_inicio.strftime('%d/%m/%Y'),
+                            "fecha_salida": fecha_salida.strftime('%d/%m/%Y'),
                             "comentarios": comentarios,
                             "creado_por": nombre_usuario,
                             "fecha_creacion": datetime.now().strftime('%d/%m/%Y %H:%M:%S')
@@ -332,7 +339,8 @@ def mostrar_gestion_usuarios():
                         st.write(f"**🏢 Áreas:** {areas_texto}")
                         st.write(f"**🕐 Turno:** {extra_info.get('turno', 'N/A')}")
                         st.write(f"**📱 Teléfono:** {extra_info.get('telefono', 'N/A')}")
-                        st.write(f"**📅 Inicio:** {extra_info.get('fecha_inicio', 'N/A')}")
+                        st.write(f"**📅 Ingreso:** {extra_info.get('fecha_inicio', 'N/A')}")
+                        st.write(f"**📅 Salida:** {extra_info.get('fecha_salida', 'N/A')}")
                 
                 # Botones de acción
                 col_btn1, col_btn2 = st.columns(2)
@@ -446,6 +454,7 @@ def mostrar_gestion_usuarios():
                                 "turno": turno_edit,
                                 "telefono": telefono_edit,
                                 "fecha_inicio": extra_actual.get('fecha_inicio', datetime.now().strftime('%d/%m/%Y')),
+                                "fecha_salida": extra_actual.get('fecha_salida', datetime.now().strftime('%d/%m/%Y')),
                                 "comentarios": comentarios_edit,
                                 "creado_por": extra_actual.get('creado_por', 'Sistema'),
                                 "fecha_creacion": extra_actual.get('fecha_creacion', datetime.now().strftime('%d/%m/%Y %H:%M:%S')),
