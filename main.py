@@ -11,6 +11,7 @@ from dashboard_kpis import mostrar_modulo_dashboard
 from reportes import mostrar_modulo_reportes
 from rendimiento_equipo import mostrar_rendimiento_equipo
 from informes_servicio_tecnico import mostrar_informes_servicio_tecnico 
+from prueba_seguridad_electrica import mostrar_pruebas_seguridad_electrica
 
 #st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
@@ -152,7 +153,7 @@ def obtener_menus_por_rol(nivel):
     elif nivel == 4:  # Ingeniero Junior
         return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Asignación Tareas", "Reportes", "Escáner QR"]
     elif nivel == 5:  # Ingeniero Clínico (Jefe)
-        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo"]
+        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Seguridad Eléctrica"]
     elif nivel == 6:  # Personal de Salud
         return ["Escáner QR", "Reportar Evento", "Mis Reportes"]
     else:
@@ -180,7 +181,8 @@ def obtener_iconos_menu(menus):
         "Gestión Pasantes": "person-badge",
         "Supervisión": "eye",
         "Pasantes": "person-workspace",
-        "Mis Reportes": "file-person"
+        "Mis Reportes": "file-person",
+        "Seguridad Eléctrica": "shield-lock"
     }
     return [iconos.get(menu, "circle") for menu in menus]
 
@@ -690,6 +692,17 @@ elif menu == "Informes Servicio Técnico":
     if 'email' not in st.session_state:
         st.session_state.email = email
     mostrar_informes_servicio_tecnico()
+
+elif menu == "Seguridad Eléctrica":
+    st.title("📑 Informes de Prueba de Seguridad Eléctrica")
+    # Pasar información del rol al módulo de informes de servicio
+    if 'name' not in st.session_state:
+        st.session_state.name = name
+    if 'rol_nombre' not in st.session_state:
+        st.session_state.rol_nombre = rol_nombre
+    if 'email' not in st.session_state:
+        st.session_state.email = email
+    mostrar_pruebas_seguridad_electrica()
 
 elif menu == "Gestión Pasantes":
     st.title("👥 Gestión de Pasantes")
