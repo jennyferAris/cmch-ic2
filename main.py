@@ -153,7 +153,7 @@ def obtener_menus_por_rol(nivel):
     elif nivel == 4:  # Ingeniero Junior
         return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Asignación Tareas", "Reportes", "Escáner QR"]
     elif nivel == 5:  # Ingeniero Clínico (Jefe)
-        return menus_base + ["Agregar Equipo","Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Seguridad Eléctrica"]
+        return menus_base + ["Crear Carpeta","Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Seguridad Eléctrica"]
     elif nivel == 6:  # Personal de Salud
         return ["Escáner QR", "Reportar Evento", "Mis Reportes"]
     else:
@@ -183,7 +183,7 @@ def obtener_iconos_menu(menus):
         "Pasantes": "person-workspace",
         "Mis Reportes": "file-person",
         "Seguridad Eléctrica": "shield-lock",
-        "Agregar Equipo": "plus-square"
+        "Crear Carpeta": "plus-square"
     }
     return [iconos.get(menu, "circle") for menu in menus]
 
@@ -705,8 +705,8 @@ elif menu == "Seguridad Eléctrica":
         st.session_state.email = email
     mostrar_pruebas_seguridad_electrica()
 
-elif menu == "Agregar Equipo":
-    st.title("+ Agregar Nuevo Equipo")
+elif menu == "Crear Carpeta":
+    st.title("+ Agregar Carpeta de Nuevo Equipo")
     
     # Mostrar información del próximo código
     nuevo_codigo = obtener_ultimo_codigo()
