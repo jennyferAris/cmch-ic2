@@ -677,9 +677,6 @@ elif menu == "Reportar Evento" and rol_nivel == 6:
     st.title("📝 Reportar Evento")
     st.info("🚨 Módulo en desarrollo - Sistema de reportes de eventos técnicos")
 
-elif menu == "Fichas Técnicas":
-    st.title("📋 Fichas Técnicas")
-    st.info("📄 Módulo en desarrollo - Fichas técnicas de equipos")
 
 elif menu == "Mis Reportes":
     st.title("📊 Mis Reportes")
