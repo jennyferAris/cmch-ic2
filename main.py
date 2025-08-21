@@ -12,7 +12,7 @@ from reportes import mostrar_modulo_reportes
 from rendimiento_equipo import mostrar_rendimiento_equipo
 from informes_servicio_tecnico import mostrar_informes_servicio_tecnico 
 from prueba_seguridad_electrica import mostrar_pruebas_seguridad_electrica
-
+from creador_carpetas import crear_nueva_carpeta 
 #st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
 # CONFIGURACIÓN CRÍTICA - AL INICIO DEL ARCHIVO
@@ -153,7 +153,7 @@ def obtener_menus_por_rol(nivel):
     elif nivel == 4:  # Ingeniero Junior
         return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Asignación Tareas", "Reportes", "Escáner QR"]
     elif nivel == 5:  # Ingeniero Clínico (Jefe)
-        return menus_base + ["Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Seguridad Eléctrica"]
+        return menus_base + ["Agregar Equipo","Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Seguridad Eléctrica"]
     elif nivel == 6:  # Personal de Salud
         return ["Escáner QR", "Reportar Evento", "Mis Reportes"]
     else:
@@ -182,7 +182,8 @@ def obtener_iconos_menu(menus):
         "Supervisión": "eye",
         "Pasantes": "person-workspace",
         "Mis Reportes": "file-person",
-        "Seguridad Eléctrica": "shield-lock"
+        "Seguridad Eléctrica": "shield-lock",
+        "Agregar Equipo": "plus-square"
     }
     return [iconos.get(menu, "circle") for menu in menus]
 
@@ -703,6 +704,11 @@ elif menu == "Seguridad Eléctrica":
     if 'email' not in st.session_state:
         st.session_state.email = email
     mostrar_pruebas_seguridad_electrica()
+
+elif menu == "Agregar Equipo":
+    st.title("+ Agregar Nuevo Equipo")
+    crear_nueva_carpeta()
+
 
 elif menu == "Gestión Pasantes":
     st.title("👥 Gestión de Pasantes")
