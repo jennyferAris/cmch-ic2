@@ -707,12 +707,36 @@ elif menu == "Seguridad Eléctrica":
 
 elif menu == "Agregar Equipo":
     st.title("+ Agregar Nuevo Equipo")
+    
+    # Mostrar información del próximo código
     nuevo_codigo = obtener_ultimo_codigo()
     if nuevo_codigo:
-        carpeta_id = crear_nueva_carpeta(nuevo_codigo)
-        if carpeta_id:
-            crear_subcarpetas(carpeta_id)
-            st.success(f"Carpeta {nuevo_codigo} creada con subcarpetas.")
+        st.info(f"Se creará una nueva carpeta con el código: **{nuevo_codigo}**")
+        
+        # Botón para ejecutar la creación
+        if st.button("✅ Crear Carpetas", use_container_width=True):
+            # Indicadores de progreso
+            progress = st.progress(0)
+            status = st.empty()
+            
+            # Paso 1: Crear carpeta principal
+            status.text("Creando carpeta principal...")
+            carpeta_id = crear_nueva_carpeta(nuevo_codigo)
+            progress.progress(50)
+            
+            if carpeta_id:
+                # Paso 2: Crear subcarpetas
+                status.text("Creando subcarpetas...")
+                crear_subcarpetas(carpeta_id)
+                progress.progress(100)
+                
+                # Mostrar resultado exitoso
+                st.success(f"✅ Carpeta **{nuevo_codigo}** creada exitosamente con subcarpetas")
+                
+            else:
+                st.error("❌ No se pudo crear la carpeta principal")
+    else:
+        st.error("❌ No se pudo obtener el código para la nueva carpeta")
 
 
 elif menu == "Gestión Pasantes":
