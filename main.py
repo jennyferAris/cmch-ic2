@@ -12,7 +12,7 @@ from reportes import mostrar_modulo_reportes
 from rendimiento_equipo import mostrar_rendimiento_equipo
 from informes_servicio_tecnico import mostrar_informes_servicio_tecnico 
 from prueba_seguridad_electrica import mostrar_pruebas_seguridad_electrica
-from creador_carpetas import crear_nueva_carpeta 
+from creador_carpetas import crear_nueva_carpeta, obtener_ultimo_codigo, crear_subcarpetas
 #st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
 # CONFIGURACIÓN CRÍTICA - AL INICIO DEL ARCHIVO
@@ -707,7 +707,12 @@ elif menu == "Seguridad Eléctrica":
 
 elif menu == "Agregar Equipo":
     st.title("+ Agregar Nuevo Equipo")
-    crear_nueva_carpeta()
+    nuevo_codigo = obtener_ultimo_codigo()
+    if nuevo_codigo:
+        carpeta_id = crear_nueva_carpeta(nuevo_codigo)
+        if carpeta_id:
+            crear_subcarpetas(carpeta_id)
+            st.success(f"Carpeta {nuevo_codigo} creada con subcarpetas.")
 
 
 elif menu == "Gestión Pasantes":
