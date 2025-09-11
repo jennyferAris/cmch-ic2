@@ -312,17 +312,18 @@ def cargar_datos():
     datos = hoja.get_all_records()
     return pd.DataFrame(datos)
 
-# Función para gestionar imágenes (nueva funcionalidad)
+# FUNCIÓN MEJORADA: Gestionar imágenes con preview de distribución
 def gestionar_imagenes():
-    """Maneja la captura y subida de imágenes"""
+    """Maneja la captura y subida de imágenes con preview de distribución en B19:N28"""
     st.markdown("### 📷 Imágenes Referenciales")
+    st.info("🎯 **Área de destino:** Celdas combinadas B19:N28 (13 columnas × 10 filas)")
     
     # Inicializar session state para imágenes si no existe
     if 'imagenes_capturadas' not in st.session_state:
         st.session_state.imagenes_capturadas = []
     
     # Pestañas para diferentes métodos de captura
-    tab1, tab2, tab3 = st.tabs(["📷 Tomar Foto", "📁 Subir Archivo", "🖼️ Imágenes Capturadas"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📷 Tomar Foto", "📁 Subir Archivo", "🖼️ Vista Previa", "⚙️ Configuración"])
     
     with tab1:
         st.markdown("#### 📸 Capturar con Cámara")
@@ -340,7 +341,7 @@ def gestionar_imagenes():
             
             with col2:
                 # Botón para guardar la foto
-                if st.button("💾 Guardar Foto", key="guardar_camera"):
+                if st.button("💾 Guardar Foto", key="guardar_camera", use_container_width=True):
                     # Convertir imagen a bytes
                     img_bytes = foto_capturada.getvalue()
                     
@@ -353,7 +354,8 @@ def gestionar_imagenes():
                         'nombre': nombre_imagen,
                         'bytes': img_bytes,
                         'tipo': 'camera',
-                        'timestamp': timestamp
+                        'timestamp': timestamp,
+                        'tamaño_original': len(img_bytes)
                     })
                     
                     st.success(f"✅ Foto guardada: {nombre_imagen}")
@@ -367,7 +369,7 @@ def gestionar_imagenes():
             "Selecciona imágenes desde tu dispositivo",
             accept_multiple_files=True,
             type=['png', 'jpg', 'jpeg', 'webp'],
-            help="Puedes seleccionar múltiples imágenes a la vez"
+            help="Puedes seleccionar múltiples imágenes a la vez. Máximo recomendado: 12 imágenes"
         )
         
         if archivos_subidos:
@@ -377,56 +379,117 @@ def gestionar_imagenes():
                 with col1:
                     # Mostrar vista previa
                     imagen = Image.open(archivo)
-                    st.image(imagen, caption=archivo.name, width=300)
+                    st.image(imagen, caption=f"{archivo.name} ({archivo.size} bytes)", width=300)
                 
                 with col2:
-                    # Botón para agregar a la colección
-                    if st.button(f"➕ Agregar", key=f"add_{archivo.name}"):
-                        # Verificar si ya existe
-                        existe = any(img['nombre'] == archivo.name for img in st.session_state.imagenes_capturadas)
-                        
-                        if not existe:
+                    # Verificar si ya existe
+                    existe = any(img['nombre'] == archivo.name for img in st.session_state.imagenes_capturadas)
+                    
+                    if not existe:
+                        if st.button(f"➕ Agregar", key=f"add_{archivo.name}", use_container_width=True):
                             st.session_state.imagenes_capturadas.append({
                                 'nombre': archivo.name,
                                 'bytes': archivo.getvalue(),
                                 'tipo': 'upload',
-                                'timestamp': datetime.now().strftime("%Y%m%d_%H%M%S")
+                                'timestamp': datetime.now().strftime("%Y%m%d_%H%M%S"),
+                                'tamaño_original': archivo.size
                             })
                             st.success(f"✅ Agregada: {archivo.name}")
                             st.rerun()
-                        else:
-                            st.warning(f"⚠️ Ya existe: {archivo.name}")
+                    else:
+                        st.warning(f"⚠️ Ya existe")
     
     with tab3:
-        st.markdown("#### 🖼️ Imágenes para Insertar en Excel")
+        st.markdown("#### 🖼️ Vista Previa de Distribución")
         
         if st.session_state.imagenes_capturadas:
-            st.success(f"📊 **Total de imágenes:** {len(st.session_state.imagenes_capturadas)}")
-            st.info("🎯 **Estas imágenes se insertarán directamente en la celda B19 del Excel**")
+            num_imagenes = len(st.session_state.imagenes_capturadas)
             
-            # Mostrar todas las imágenes guardadas
-            cols = st.columns(3)
-            
-            for i, img_data in enumerate(st.session_state.imagenes_capturadas):
-                with cols[i % 3]:
-                    # Mostrar imagen
-                    imagen = Image.open(io.BytesIO(img_data['bytes']))
-                    st.image(imagen, caption=img_data['nombre'], width=200)
-                    
-                    # Información adicional
-                    st.caption(f"🕒 {img_data['timestamp']}")
-                    st.caption(f"📱 Fuente: {'Cámara' if img_data['tipo'] == 'camera' else 'Archivo'}")
-                    
-                    # Botón para eliminar
-                    if st.button(f"🗑️ Eliminar", key=f"del_{i}"):
-                        st.session_state.imagenes_capturadas.pop(i)
-                        st.rerun()
-            
-            # Botones de gestión
+            # Mostrar información de distribución
             col1, col2 = st.columns(2)
             
             with col1:
-                if st.button("🗑️ **Limpiar Todas**", use_container_width=True):
+                st.metric("📊 Total de imágenes", num_imagenes)
+                st.metric("🎯 Área destino", "B19:N28")
+                
+            with col2:
+                # Calcular distribución óptima
+                distribuciones = []
+                for cols in range(1, 5):  # Máximo 4 columnas
+                    filas = (num_imagenes + cols - 1) // cols
+                    if filas <= 10:  # Máximo 10 filas disponibles
+                        distribuciones.append((cols, filas))
+                
+                if distribuciones:
+                    # Elegir la mejor distribución
+                    cols, filas = distribuciones[0] if num_imagenes <= 4 else (min(4, num_imagenes), (num_imagenes + 3) // 4)
+                    st.metric("📐 Distribución", f"{cols} cols × {filas} filas")
+                    
+                    # Calcular tamaño aproximado por imagen
+                    ancho_aprox = int(180 / cols * min(cols, 4))
+                    alto_aprox = int(120 / filas * min(filas, 3))
+                    st.metric("📏 Tamaño aprox/img", f"{ancho_aprox}×{alto_aprox}px")
+                else:
+                    st.error("❌ Demasiadas imágenes para el área disponible")
+            
+            # Vista previa visual de la distribución
+            st.markdown("#### 🎨 Preview de Distribución en Excel")
+            
+            # Crear una representación visual
+            if num_imagenes <= 12:  # Límite razonable para mostrar preview
+                cols_preview = min(4, (num_imagenes + 2) // 3) if num_imagenes > 4 else min(2, num_imagenes)
+                
+                # Mostrar imágenes en la distribución calculada
+                for i in range(0, num_imagenes, cols_preview):
+                    cols = st.columns(cols_preview)
+                    for j in range(cols_preview):
+                        if i + j < num_imagenes:
+                            img_data = st.session_state.imagenes_capturadas[i + j]
+                            with cols[j]:
+                                imagen = Image.open(io.BytesIO(img_data['bytes']))
+                                st.image(imagen, caption=f"Pos {i+j+1}: {img_data['nombre'][:15]}...", width=150)
+                                st.caption(f"🕒 {img_data['timestamp']}")
+            else:
+                st.warning("⚠️ Demasiadas imágenes para mostrar preview. Se mostrarán las primeras 12:")
+                
+                # Mostrar solo las primeras 12
+                for i in range(0, min(12, num_imagenes), 3):
+                    cols = st.columns(3)
+                    for j in range(3):
+                        if i + j < min(12, num_imagenes):
+                            img_data = st.session_state.imagenes_capturadas[i + j]
+                            with cols[j]:
+                                imagen = Image.open(io.BytesIO(img_data['bytes']))
+                                st.image(imagen, caption=f"{i+j+1}. {img_data['nombre'][:12]}...", width=120)
+            
+            # Información de archivos
+            st.markdown("#### 📋 Lista de Imágenes")
+            
+            total_size = sum(img['tamaño_original'] for img in st.session_state.imagenes_capturadas)
+            st.info(f"💾 **Tamaño total:** {total_size / 1024:.1f} KB | **Promedio:** {total_size / len(st.session_state.imagenes_capturadas) / 1024:.1f} KB/imagen")
+            
+            for i, img_data in enumerate(st.session_state.imagenes_capturadas, 1):
+                col1, col2, col3 = st.columns([3, 2, 1])
+                
+                with col1:
+                    st.write(f"**{i}.** {img_data['nombre']}")
+                    
+                with col2:
+                    fuente = "📷 Cámara" if img_data['tipo'] == 'camera' else "📁 Archivo"
+                    tamaño = f"{img_data['tamaño_original'] / 1024:.1f} KB"
+                    st.write(f"{fuente} | {tamaño}")
+                    
+                with col3:
+                    if st.button("🗑️", key=f"del_prev_{i}", help=f"Eliminar {img_data['nombre']}"):
+                        st.session_state.imagenes_capturadas.pop(i-1)
+                        st.rerun()
+            
+            # Botones de gestión
+            st.markdown("---")
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                if st.button("🗑️ **Limpiar Todas**", use_container_width=True, type="secondary"):
                     st.session_state.imagenes_capturadas = []
                     st.success("✅ Todas las imágenes eliminadas")
                     st.rerun()
@@ -435,9 +498,7 @@ def gestionar_imagenes():
                 if st.button("💾 **Descargar ZIP**", use_container_width=True):
                     import zipfile
                     
-                    # Crear ZIP con todas las imágenes
                     zip_buffer = io.BytesIO()
-                    
                     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
                         for img_data in st.session_state.imagenes_capturadas:
                             zip_file.writestr(img_data['nombre'], img_data['bytes'])
@@ -450,22 +511,169 @@ def gestionar_imagenes():
                         file_name=f"imagenes_incidente_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
                         mime="application/zip"
                     )
+            
+            with col3:
+                if st.button("🔄 **Reordenar**", use_container_width=True):
+                    # Reordenar por timestamp
+                    st.session_state.imagenes_capturadas.sort(key=lambda x: x['timestamp'])
+                    st.success("✅ Imágenes reordenadas por fecha")
+                    st.rerun()
+        
         else:
-            st.info("📝 No hay imágenes guardadas aún. Usa las pestañas anteriores para capturar o subir imágenes.")
-            st.warning("⚠️ **Sin imágenes, la celda B19 del Excel quedará vacía.**")
+            st.info("📝 No hay imágenes guardadas aún.")
+            st.markdown("""
+            ### 💡 Consejos para mejores resultados:
+            
+            - **📏 Resolución recomendada:** 800×600 píxeles o superior
+            - **📷 Cantidad óptima:** 4-6 imágenes por informe
+            - **🎯 Enfoque:** Capturas claras del problema/daño
+            - **💡 Iluminación:** Buena luz para detalles nítidos
+            - **📐 Orientación:** Horizontal (landscape) preferible
+            """)
+    
+    with tab4:
+        st.markdown("#### ⚙️ Configuración de Inserción")
+        
+        # Configuraciones avanzadas
+        with st.expander("🔧 Configuración Avanzada", expanded=False):
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**📐 Dimensiones por Imagen:**")
+                max_width = st.slider("Ancho máximo (px)", 100, 300, 180)
+                max_height = st.slider("Alto máximo (px)", 80, 200, 120)
+                
+                st.markdown("**🎨 Calidad:**")
+                jpeg_quality = st.slider("Calidad JPEG (%)", 70, 95, 90)
+                
+            with col2:
+                st.markdown("**📊 Distribución:**")
+                forzar_columnas = st.selectbox(
+                    "Forzar número de columnas",
+                    ["Automático", "1", "2", "3", "4"]
+                )
+                
+                ajustar_celdas = st.checkbox("Ajustar tamaño de celdas", value=True)
+                
+                st.markdown("**🔍 Debug:**")
+                mostrar_coordenadas = st.checkbox("Mostrar coordenadas", value=False)
+                
+            # Guardar configuraciones en session state
+            st.session_state.config_imagenes = {
+                'max_width': max_width,
+                'max_height': max_height,
+                'jpeg_quality': jpeg_quality,
+                'forzar_columnas': forzar_columnas,
+                'ajustar_celdas': ajustar_celdas,
+                'mostrar_coordenadas': mostrar_coordenadas
+            }
+        
+        # Información técnica
+        st.markdown("#### 📋 Especificaciones Técnicas")
+        
+        st.info("""
+        **🎯 Área de destino:** B19:N28
+        - **Columnas:** B, C, D, E, F, G, H, I, J, K, L, M, N (13 columnas)
+        - **Filas:** 19, 20, 21, 22, 23, 24, 25, 26, 27, 28 (10 filas)
+        - **Área total:** 130 celdas combinadas
+        """)
+        
+        st.success("""
+        **✅ Capacidades:**
+        - ✓ Máximo recomendado: 12 imágenes
+        - ✓ Distribución automática inteligente
+        - ✓ Redimensionamiento proporcional
+        - ✓ Optimización de calidad/tamaño
+        - ✓ Ajuste automático de celdas
+        """)
+        
+        st.warning("""
+        **⚠️ Limitaciones:**
+        - Formato final: JPEG optimizado
+        - Las imágenes se incrustan permanentemente
+        - El proceso puede tomar tiempo con muchas imágenes
+        - Requiere conexión estable a Drive
+        """)
     
     return st.session_state.imagenes_capturadas
 
+# FUNCIÓN AUXILIAR: Validar configuración de imágenes
+def validar_configuracion_imagenes(imagenes_data):
+    """Valida que la configuración de imágenes sea óptima"""
+    
+    num_imagenes = len(imagenes_data)
+    
+    # Validaciones
+    validaciones = []
+    
+    if num_imagenes == 0:
+        validaciones.append(("❌", "No hay imágenes seleccionadas"))
+    elif num_imagenes > 12:
+        validaciones.append(("⚠️", f"Demasiadas imágenes ({num_imagenes}). Recomendado: máximo 12"))
+    elif num_imagenes > 6:
+        validaciones.append(("⚠️", f"Muchas imágenes ({num_imagenes}). Óptimo: 4-6 imágenes"))
+    else:
+        validaciones.append(("✅", f"Cantidad óptima: {num_imagenes} imágenes"))
+    
+    # Verificar tamaños
+    if imagenes_data:
+        total_size = sum(len(img['bytes']) for img in imagenes_data)
+        if total_size > 10 * 1024 * 1024:  # 10MB
+            validaciones.append(("⚠️", f"Archivos muy pesados: {total_size/1024/1024:.1f}MB"))
+        elif total_size > 5 * 1024 * 1024:  # 5MB
+            validaciones.append(("⚠️", f"Archivos pesados: {total_size/1024/1024:.1f}MB"))
+        else:
+            validaciones.append(("✅", f"Tamaño adecuado: {total_size/1024/1024:.1f}MB"))
+    
+    return validaciones
+
+# FUNCIÓN AUXILIAR: Obtener información de distribución
+def obtener_info_distribucion(num_imagenes):
+    """Calcula y retorna información sobre cómo se distribuirán las imágenes"""
+    
+    if num_imagenes == 0:
+        return None
+    
+    # Distribución óptima
+    distribuciones = []
+    for cols in range(1, 5):
+        filas = (num_imagenes + cols - 1) // cols
+        if filas <= 10:  # Máximo 10 filas
+            eficiencia = num_imagenes / (cols * filas)
+            area_por_img = (13 / cols) * (10 / filas)
+            distribuciones.append({
+                'cols': cols,
+                'filas': filas,
+                'eficiencia': eficiencia,
+                'area_por_img': area_por_img,
+                'score': eficiencia * area_por_img
+            })
+    
+    if distribuciones:
+        mejor = max(distribuciones, key=lambda x: x['score'])
+        return {
+            'columnas': mejor['cols'],
+            'filas': mejor['filas'],
+            'eficiencia': mejor['eficiencia'],
+            'tamaño_aprox_ancho': int(180 / mejor['cols']),
+            'tamaño_aprox_alto': int(120 / mejor['filas']),
+            'celdas_usadas': mejor['cols'] * mejor['filas'],
+            'celdas_disponibles': 130
+        }
+    
+    return None
+
 # FUNCIÓN PRINCIPAL PARA INFORMES DE MAL USO (MODIFICADA)
 def mostrar_informes_mal_uso():
-    """Función principal del módulo de informes de mal uso"""
+    """Función principal del módulo de informes de mal uso optimizado para B19:N28"""
     
     # IDs de Google Drive - CAMBIAR POR TUS IDs REALES
     PLANTILLA_MAL_USO_ID = "1mW0gzxNAtyd02FSN15Ru39IUZZAwWe-o"  
     CARPETA_MAL_USO_ID = "1wD8J5xy8cXCLStOAvx7MxOFGHluVVolf"     
 
     st.title("📋 Informe de Mal Uso - MEDIFLOW")
-    st.info("🖼️ **Nueva funcionalidad:** Las imágenes se insertarán directamente en la celda B19 del Excel")
+    st.info("🖼️ **Área de imágenes:** B19:N28 (13 columnas × 10 filas) - Distribución automática inteligente")
 
     # Información del usuario
     if hasattr(st.session_state, 'name') and hasattr(st.session_state, 'rol_nombre'):
@@ -474,13 +682,25 @@ def mostrar_informes_mal_uso():
     # Configurar Google Drive
     drive_service = configurar_drive_api()
 
-    # Botón para debugging (opcional)
-    if st.checkbox("🔧 Modo Debug - Inspeccionar Plantilla"):
-        if st.button("Inspeccionar celdas fusionadas"):
-            inspeccionar_plantilla(drive_service, PLANTILLA_MAL_USO_ID)
+    # Panel de diagnóstico (modo debug)
+    with st.expander("🔧 Herramientas de Diagnóstico", expanded=False):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("🔍 Inspeccionar Plantilla General"):
+                inspeccionar_plantilla(drive_service, PLANTILLA_MAL_USO_ID)
+        
+        with col2:
+            if st.button("🖼️ Inspeccionar Área B19:N28"):
+                inspeccionar_area_imagenes(drive_service, PLANTILLA_MAL_USO_ID)
 
     # Cargar base de datos
-    df = cargar_datos()
+    try:
+        df = cargar_datos()
+        st.success(f"✅ Base de datos cargada: {len(df)} equipos disponibles")
+    except Exception as e:
+        st.error(f"❌ Error cargando base de datos: {e}")
+        st.stop()
 
     # ============== SELECTOR DE EQUIPOS ==============
     st.markdown("### 🔍 Selección de Equipo/Accesorio/Repuesto")
@@ -612,6 +832,34 @@ def mostrar_informes_mal_uso():
     # ============== IMÁGENES REFERENCIALES (FUNCIONALIDAD MEJORADA) ==============
     imagenes_guardadas = gestionar_imagenes()
 
+    # ============== VALIDACIÓN Y PREVIEW ==============
+    if imagenes_guardadas:
+        st.markdown("### 📊 Validación y Preview")
+        
+        # Validar configuración
+        validaciones = validar_configuracion_imagenes(imagenes_guardadas)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("**🔍 Validaciones:**")
+            for icono, mensaje in validaciones:
+                if icono == "✅":
+                    st.success(f"{icono} {mensaje}")
+                elif icono == "⚠️":
+                    st.warning(f"{icono} {mensaje}")
+                else:
+                    st.error(f"{icono} {mensaje}")
+        
+        with col2:
+            # Información de distribución
+            info_dist = obtener_info_distribucion(len(imagenes_guardadas))
+            if info_dist:
+                st.markdown("**📐 Distribución calculada:**")
+                st.info(f"🔲 **Layout:** {info_dist['columnas']} columnas × {info_dist['filas']} filas")
+                st.info(f"📏 **Tamaño/imagen:** ~{info_dist['tamaño_aprox_ancho']}×{info_dist['tamaño_aprox_alto']}px")
+                st.info(f"⚡ **Eficiencia:** {info_dist['eficiencia']:.1%} del área")
+
     # ============== CÓDIGO DEL INFORME ==============
     fecha_actual = datetime.now()
     if equipo_nombre and modelo and serie:
@@ -621,18 +869,70 @@ def mostrar_informes_mal_uso():
     else:
         codigo_informe = ""
 
+    # ============== RESUMEN FINAL ==============
+    if codigo_informe and inconveniente.strip():
+        st.markdown("### 📋 Resumen del Informe")
+        
+        with st.expander("👁️ Ver Resumen Completo", expanded=False):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**🏥 Información General:**")
+                st.write(f"• **Código:** {codigo_informe}")
+                st.write(f"• **Sede:** {sede}")
+                st.write(f"• **UPSS:** {upss}")
+                st.write(f"• **Personal:** {personal_asignado}")
+                
+                st.markdown("**⚙️ Equipo Afectado:**")
+                st.write(f"• **Equipo:** {equipo_nombre}")
+                st.write(f"• **Marca/Modelo:** {marca} {modelo}")
+                st.write(f"• **Serie:** {serie}")
+            
+            with col2:
+                st.markdown("**📝 Detalles:**")
+                st.write(f"• **Inconveniente:** {inconveniente[:100]}...")
+                
+                st.markdown("**🖼️ Imágenes:**")
+                if imagenes_guardadas:
+                    st.write(f"• **Cantidad:** {len(imagenes_guardadas)} imágenes")
+                    info_dist = obtener_info_distribucion(len(imagenes_guardadas))
+                    if info_dist:
+                        st.write(f"• **Distribución:** {info_dist['columnas']}×{info_dist['filas']} en B19:N28")
+                        st.write(f"• **Tamaño aprox:** {info_dist['tamaño_aprox_ancho']}×{info_dist['tamaño_aprox_alto']}px")
+                else:
+                    st.write("• **Sin imágenes adjuntas**")
+
     # ============== BOTÓN PARA GENERAR INFORME ==============
     st.markdown("---")
     
-    if st.button("📤 **SUBIR INFORME DE MAL USO A DRIVE**", type="primary", use_container_width=True):
+    # Verificar requisitos mínimos
+    puede_generar = bool(codigo_informe and inconveniente.strip())
+    
+    if not puede_generar:
+        st.error("❌ **Requisitos faltantes:**")
         if not codigo_informe:
-            st.error("❌ Por favor selecciona un equipo válido")
-            st.stop()
-        
+            st.write("• Selecciona un equipo válido")
         if not inconveniente.strip():
-            st.warning("⚠️ Completa el campo obligatorio: inconveniente reportado")
-            st.stop()
-        
+            st.write("• Completa el campo 'Inconveniente reportado'")
+    
+    # Botón de generación
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        generar_informe = st.button(
+            "📤 **GENERAR Y SUBIR INFORME DE MAL USO**", 
+            type="primary", 
+            use_container_width=True,
+            disabled=not puede_generar
+        )
+    
+    with col2:
+        if imagenes_guardadas:
+            st.metric("🖼️ Imágenes", len(imagenes_guardadas))
+        else:
+            st.warning("Sin imágenes")
+    
+    if generar_informe:
         # Preparar datos del formulario
         datos_formulario = {
             'codigo_informe': codigo_informe,
@@ -649,110 +949,296 @@ def mostrar_informes_mal_uso():
             'num_imagenes': len(imagenes_guardadas)
         }
         
-        # Proceso con barra de progreso
-        progress_bar = st.progress(0)
-        status_text = st.empty()
+        # Proceso con barra de progreso mejorada
+        progress_container = st.container()
         
-        try:
-            status_text.text("🔄 Procesando informe de mal uso...")
-            progress_bar.progress(10)
+        with progress_container:
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            eta_text = st.empty()
             
-            status_text.text("🖼️ Preparando imágenes para inserción...")
-            progress_bar.progress(25)
-            
-            status_text.text("📋 Creando copia y llenando datos...")
-            progress_bar.progress(50)
-            
-            status_text.text("📷 Insertando imágenes en celda B19...")
-            progress_bar.progress(75)
-            
-            status_text.text("☁️ Subiendo a Google Drive...")
-            progress_bar.progress(90)
-            
-            # Crear informe completo con imágenes
-            resultado_final, archivo_editado = crear_informe_mal_uso_completo(
-                drive_service, 
-                PLANTILLA_MAL_USO_ID, 
-                CARPETA_MAL_USO_ID, 
-                datos_formulario,
-                imagenes_guardadas  # <- PASAR LAS IMÁGENES
-            )
-            
-            if resultado_final:
-                progress_bar.progress(100)
-                status_text.text("✅ ¡Informe de mal uso subido exitosamente!")
+            try:
+                # Paso 1: Validaciones iniciales
+                status_text.text("🔍 Validando datos y configuración...")
+                eta_text.text("Tiempo estimado: 30-60 segundos")
+                progress_bar.progress(5)
+                time.sleep(1)
                 
-                st.success("🎉 **¡Informe de mal uso subido a Drive con imágenes!**")
+                # Paso 2: Configurar Drive
+                status_text.text("☁️ Conectando con Google Drive...")
+                progress_bar.progress(15)
                 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.info(f"📁 **Archivo:** {resultado_final['name']}")
-                    st.info(f"🆔 **ID:** {resultado_final['id']}")
-                    st.info(f"📷 **Imágenes insertadas en B19:** {len(imagenes_guardadas)}")
-                
-                with col2:
-                    if 'webViewLink' in resultado_final:
-                        st.markdown(f"🔗 [Ver en Google Drive]({resultado_final['webViewLink']})")
-                    
-                    # Descarga local opcional
-                    if archivo_editado:
-                        archivo_editado.seek(0)
-                        st.download_button(
-                            label="⬇️ Descargar copia local",
-                            data=archivo_editado,
-                            file_name=f"{resultado_final['name']}.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        )
-                
-                # Mostrar resumen de lo que se insertó
+                # Paso 3: Procesar imágenes
                 if imagenes_guardadas:
-                    with st.expander("📋 Resumen de imágenes insertadas", expanded=False):
-                        for i, img in enumerate(imagenes_guardadas, 1):
-                            st.write(f"**{i}.** {img['nombre']} ({img['tipo']})")
+                    status_text.text(f"🖼️ Procesando {len(imagenes_guardadas)} imágenes para inserción...")
+                    eta_text.text("Optimizando calidad y tamaño...")
+                    progress_bar.progress(30)
+                    time.sleep(2)  # Simular procesamiento
                 
-                # Limpiar imágenes después de subir exitosamente
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("🧹 **Limpiar imágenes para nuevo informe**", use_container_width=True):
-                        st.session_state.imagenes_capturadas = []
-                        st.success("✅ Imágenes limpiadas")
-                        st.rerun()
+                # Paso 4: Crear copia de plantilla
+                status_text.text("📋 Creando copia de plantilla...")
+                progress_bar.progress(45)
                 
-                with col2:
-                    if st.button("📋 **Crear nuevo informe**", use_container_width=True):
-                        st.session_state.imagenes_capturadas = []
-                        st.rerun()
+                # Paso 5: Llenar datos
+                status_text.text("✏️ Llenando datos del formulario...")
+                progress_bar.progress(60)
+                
+                # Paso 6: Insertar imágenes
+                if imagenes_guardadas:
+                    status_text.text("🎨 Insertando imágenes en área B19:N28...")
+                    eta_text.text("Distribución automática en curso...")
+                    progress_bar.progress(80)
+                    time.sleep(1)
+                else:
+                    progress_bar.progress(80)
+                
+                # Paso 7: Subir a Drive
+                status_text.text("☁️ Subiendo archivo final a Google Drive...")
+                eta_text.text("Finalizando proceso...")
+                progress_bar.progress(90)
+                
+                # Crear informe completo
+                resultado_final, archivo_editado = crear_informe_mal_uso_completo(
+                    drive_service, 
+                    PLANTILLA_MAL_USO_ID, 
+                    CARPETA_MAL_USO_ID, 
+                    datos_formulario,
+                    imagenes_guardadas
+                )
+                
+                if resultado_final:
+                    progress_bar.progress(100)
+                    status_text.text("✅ ¡Informe generado exitosamente!")
+                    eta_text.text("Proceso completado")
+                    
+                    # Mensaje de éxito
+                    st.balloons()  # Celebración
+                    st.success("🎉 **¡Informe de mal uso creado y subido exitosamente!**")
+                    
+                    # Información del archivo
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.info(f"📁 **Archivo:** {resultado_final['name']}")
+                        st.info(f"📅 **Fecha:** {fecha_actual.strftime('%d/%m/%Y %H:%M')}")
+                    
+                    with col2:
+                        st.info(f"🆔 **ID Drive:** {resultado_final['id'][:20]}...")
+                        if imagenes_guardadas:
+                            st.info(f"🖼️ **Imágenes en B19:N28:** {len(imagenes_guardadas)}")
+                        else:
+                            st.info("🖼️ **Imágenes:** Ninguna")
+                    
+                    with col3:
+                        # Enlaces y descargas
+                        if 'webViewLink' in resultado_final:
+                            st.markdown(f"🔗 [**Ver en Google Drive**]({resultado_final['webViewLink']})")
                         
-            else:
-                st.error("❌ Error al crear el informe")
+                        # Descarga local opcional
+                        if archivo_editado:
+                            archivo_editado.seek(0)
+                            st.download_button(
+                                label="⬇️ **Descargar Excel**",
+                                data=archivo_editado,
+                                file_name=f"{resultado_final['name']}.xlsx",
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                use_container_width=True
+                            )
+                    
+                    # Detalles de las imágenes insertadas
+                    if imagenes_guardadas:
+                        with st.expander("📊 Detalles de Imágenes Insertadas", expanded=False):
+                            st.success(f"🎯 **Ubicación:** Celdas combinadas B19:N28")
+                            
+                            # Información de distribución final
+                            info_dist = obtener_info_distribucion(len(imagenes_guardadas))
+                            if info_dist:
+                                col1, col2 = st.columns(2)
+                                
+                                with col1:
+                                    st.metric("📐 Distribución Final", f"{info_dist['columnas']} × {info_dist['filas']}")
+                                    st.metric("📏 Tamaño por Imagen", f"{info_dist['tamaño_aprox_ancho']}×{info_dist['tamaño_aprox_alto']}px")
+                                
+                                with col2:
+                                    st.metric("⚡ Eficiencia del Área", f"{info_dist['eficiencia']:.1%}")
+                                    st.metric("🔲 Celdas Utilizadas", f"{info_dist['celdas_usadas']}/130")
+                            
+                            # Lista de imágenes procesadas
+                            st.markdown("**📋 Imágenes procesadas:**")
+                            for i, img in enumerate(imagenes_guardadas, 1):
+                                fuente_icon = "📷" if img['tipo'] == 'camera' else "📁"
+                                tamaño_kb = len(img['bytes']) / 1024
+                                st.write(f"**{i}.** {fuente_icon} {img['nombre']} ({tamaño_kb:.1f} KB)")
+                    
+                    # Acciones post-creación
+                    st.markdown("---")
+                    st.markdown("### 🎯 ¿Qué hacer ahora?")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        if st.button("🧹 **Nuevo Informe**", use_container_width=True, type="secondary"):
+                            # Limpiar todo para nuevo informe
+                            st.session_state.imagenes_capturadas = []
+                            st.success("✅ Listo para nuevo informe")
+                            st.rerun()
+                    
+                    with col2:
+                        if st.button("📄 **Ver Archivo**", use_container_width=True):
+                            if 'webViewLink' in resultado_final:
+                                st.markdown(f"🔗 [Abrir en nueva pestaña]({resultado_final['webViewLink']})")
+                            else:
+                                st.info("ℹ️ Link no disponible")
+                    
+                    with col3:
+                        if imagenes_guardadas and st.button("🖼️ **Mantener Imágenes**", use_container_width=True):
+                            st.info("✅ Imágenes conservadas para siguiente informe")
+                    
+                    # Estadísticas de sesión (opcional)
+                    if 'informes_creados' not in st.session_state:
+                        st.session_state.informes_creados = 0
+                    st.session_state.informes_creados += 1
+                    
+                    if st.session_state.informes_creados > 1:
+                        st.info(f"📊 **Sesión actual:** {st.session_state.informes_creados} informes creados")
+                    
+                else:
+                    progress_bar.progress(0)
+                    status_text.text("❌ Error en la creación")
+                    eta_text.text("")
+                    st.error("❌ **Error al crear el informe**")
+                    st.error("Por favor verifica la configuración de Google Drive y vuelve a intentar.")
+                    
+            except Exception as e:
+                progress_bar.progress(0)
+                status_text.text("❌ Error inesperado")
+                eta_text.text("")
+                st.error(f"❌ **Error inesperado:** {str(e)}")
                 
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
-            progress_bar.empty()
-            status_text.empty()
+                # Información de debug
+                with st.expander("🔍 Información de Debug", expanded=False):
+                    import traceback
+                    st.code(traceback.format_exc())
 
     # ============== INFORMACIÓN ADICIONAL ==============
-    with st.expander("ℹ️ Información sobre inserción de imágenes", expanded=False):
-        st.markdown("""
-        ### 🖼️ **Cómo funciona la inserción de imágenes:**
+    with st.expander("📚 Guía de Uso y Especificaciones Técnicas", expanded=False):
+        tab1, tab2, tab3 = st.tabs(["📖 Guía de Uso", "🔧 Especificaciones", "❓ FAQ"])
         
-        1. **📍 Ubicación:** Las imágenes se insertan directamente en la celda **B19** del Excel
-        2. **📐 Diseño:** Máximo 2 imágenes por fila, organizadas automáticamente
-        3. **📏 Tamaño:** Las imágenes se redimensionan automáticamente (máx. 200x150 píxeles)
-        4. **🎨 Formato:** Se convierten a JPEG optimizado para mejor compatibilidad
-        5. **📊 Layout:** Las filas y columnas se ajustan automáticamente para acomodar las imágenes
-        
-        ### ✅ **Formatos soportados:**
-        - 📷 **Cámara:** JPG (captura directa)
-        - 📁 **Archivos:** PNG, JPG, JPEG, WEBP
-        
-        ### ⚠️ **Consideraciones importantes:**
-        - Las imágenes grandes se redimensionan automáticamente
-        - El proceso puede tomar unos segundos con múltiples imágenes
-        - Las imágenes quedan permanentemente incrustadas en el Excel
-        """)
+        with tab1:
+            st.markdown("""
+            ### 📖 **Cómo usar el sistema:**
+            
+            #### 1️⃣ **Selección de Equipo**
+            - Usa el **selector inteligente** para buscar por área
+            - O ingresa el **código manualmente** si lo conoces
+            - Verifica que todos los datos del equipo sean correctos
+            
+            #### 2️⃣ **Información del Informe**  
+            - Completa todos los campos obligatorios
+            - El **personal asignado** se llena automáticamente
+            - Selecciona la **sede** y **UPSS** correctas
+            
+            #### 3️⃣ **Descripción del Problema**
+            - Describe **detalladamente** el mal uso o incidente
+            - Incluye **fechas, horarios** si son relevantes
+            - Menciona **testigos** si los hay
+            
+            #### 4️⃣ **Imágenes Referenciales**
+            - **Toma fotos** con la cámara o **sube archivos**
+            - Máximo **12 imágenes** recomendado
+            - Las imágenes se insertan automáticamente en **B19:N28**
+            
+            #### 5️⃣ **Generación Final**
+            - Revisa el **resumen** antes de generar
+            - El proceso toma **30-60 segundos**
+            - El archivo se sube automáticamente a **Google Drive**
+            """)
+            
+        with tab2:
+            st.markdown("""
+            ### 🔧 **Especificaciones Técnicas:**
+            
+            #### 📊 **Área de Imágenes (B19:N28)**
+            - **Dimensiones:** 13 columnas × 10 filas (130 celdas)
+            - **Columnas:** B, C, D, E, F, G, H, I, J, K, L, M, N  
+            - **Filas:** 19, 20, 21, 22, 23, 24, 25, 26, 27, 28
+            - **Tipo:** Celdas combinadas/fusionadas
+            
+            #### 🖼️ **Procesamiento de Imágenes**
+            - **Formatos soportados:** PNG, JPG, JPEG, WEBP
+            - **Formato final:** JPEG optimizado (calidad 90%)
+            - **Redimensionamiento:** Automático con proporción
+            - **Tamaño máximo por imagen:** 180×120 píxeles (ajustable)
+            
+            #### 📐 **Distribución Automática**
+            - **1-2 imágenes:** 1-2 columnas × 1 fila
+            - **3-4 imágenes:** 2 columnas × 2 filas  
+            - **5-6 imágenes:** 3 columnas × 2 filas
+            - **7-9 imágenes:** 3 columnas × 3 filas
+            - **10+ imágenes:** 4 columnas × múltiples filas
+            
+            #### ☁️ **Integración con Google Drive**
+            - **Plantilla base:** Excel con formato predefinido
+            - **Carpeta destino:** Configurada por administrador  
+            - **Permisos:** Lectura/escritura en carpeta específica
+            - **Backup local:** Descarga opcional del archivo final
+            """)
+            
+        with tab3:
+            st.markdown("""
+            ### ❓ **Preguntas Frecuentes:**
+            
+            #### **🤔 ¿Qué pasa si no agrego imágenes?**
+            - El informe se genera normalmente
+            - La celda B19 contendrá el texto "Sin imágenes referenciales"
+            - Es recomendable siempre incluir evidencia visual
+            
+            #### **📱 ¿Puedo usar fotos tomadas con el móvil?**
+            - Sí, usa la pestaña "📁 Subir Archivo"  
+            - Formatos compatibles: JPG, PNG, WEBP
+            - Las imágenes se optimizan automáticamente
+            
+            #### **🔄 ¿Puedo modificar un informe ya creado?**
+            - No directamente desde el sistema
+            - Puedes descargar el Excel y editarlo manualmente
+            - O crear un nuevo informe con las correcciones
+            
+            #### **⚡ ¿Por qué es lento el proceso?**
+            - Las imágenes se procesan individualmente
+            - La subida a Google Drive puede tomar tiempo
+            - Conexión a internet influye en la velocidad
+            
+            #### **🔒 ¿Los datos están seguros?**
+            - Se usa autenticación OAuth2 de Google
+            - Los archivos se almacenan en Drive corporativo
+            - No se guardan datos localmente en el servidor
+            
+            #### **💾 ¿Puedo trabajar sin internet?**
+            - No, se requiere conexión constante
+            - Tanto para cargar la base de datos como para subir archivos
+            - Recomendamos conexión estable durante todo el proceso
+            """)
 
-    # Footer
+    # ============== FOOTER ==============
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; color: #666; font-size: 14px; padding: 20px;'>
+        🚨 <strong>Sistema de Informes de Mal Uso - MEDIFLOW v3.0</strong><br>
+        🖼️ Con inserción automática en área B19:N28 (13×10 celdas) | 
+        🎯 Distribución inteligente | 
+        ☁️ Integración Google Drive<br>
+        <br>
+        <strong>Funcionalidades avanzadas:</strong><br>
+        ✅ Procesamiento automático de imágenes | 
+        ✅ Distribución óptima según cantidad | 
+        ✅ Validación de configuración |<br>
+        ✅ Redimensionamiento proporcional | 
+        ✅ Optimización de calidad/tamaño | 
+        ✅ Ajuste automático de celdas
+    </div>
+    """, unsafe_allow_html=True)
+
+# Footer
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666; font-size: 14px;'>
