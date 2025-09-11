@@ -1,786 +1,756 @@
 import streamlit as st
-from streamlit_option_menu import option_menu
-from base_datos import mostrar_base_datos
-from generar_qr import generar_qrs
-import json
-from escanear_qr import mostrar_escaner_qr
-from informes_tecnicos import mostrar_informes_tecnicos 
-from asignacion_tareas import mostrar_modulo_asignacion 
-from gestion_usuarios import mostrar_modulo_gestion_usuarios
-from dashboard_kpis import mostrar_modulo_dashboard
-from reportes import mostrar_modulo_reportes
-from rendimiento_equipo import mostrar_rendimiento_equipo
-from informes_servicio_tecnico import mostrar_informes_servicio_tecnico 
-from prueba_seguridad_electrica import mostrar_pruebas_seguridad_electrica
-from creador_carpetas import crear_nueva_carpeta, obtener_ultimo_codigo, crear_subcarpetas
-from ficha_tecnica import mostrar_fichas_tecnicas
-from informe_mal_uso import mostrar_informes_mal_uso
-#st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
+import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from datetime import datetime, time
+import openpyxl
+from openpyxl.styles import Font
+from openpyxl.drawing.image import Image as ExcelImage
+from openpyxl.utils import get_column_letter
+import io
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
+from PIL import Image, ImageOps
+import base64
 
-# CONFIGURACIÓN CRÍTICA - AL INICIO DEL ARCHIVO
-st.set_page_config(
-    page_title="MEDIFLOW",
-    page_icon="./static/ICON.ico",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# Configurar Google Drive API
+@st.cache_resource
+def configurar_drive_api():
+    """Configura la API de Google Drive"""
+    info = st.secrets["google_service_account"]
+    scope = [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    credenciales = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+    drive_service = build('drive', 'v3', credentials=credenciales)
+    return drive_service
 
-# CSS GLOBAL CRÍTICO - JUSTO DESPUÉS
-st.markdown("""
-<style>
-    .reportview-container .main .block-container {
-        padding-top: 0rem !important;
-        padding-bottom: 0rem !important;
-        background: transparent !important;
-    }
-    
-    .reportview-container .main {
-        background: transparent !important;
-    }
-    
-    .main > div:first-child {
-        display: none !important;
-    }
-    
-    /* CSS actualizado para Sidebar más ancho */
-    [data-testid="stSidebar"] {
-        width: 400px !important;
-        min-width: 400px !important;
-    }
-
-    [data-testid="stSidebar"] > div {
-        width: 400px !important;
-        min-width: 400px !important;
-    }
-
-    [data-testid="stSidebar"] .block-container {
-        padding-left: 1.5rem !important;
-        padding-right: 1.5rem !important;
-    }
-
-    /* Ajustar el contenido principal */
-    .main .block-container {
-        padding-left: 2rem !important;
-        max-width: none !important;
-    }
-
-    /* Mejorar el option_menu específicamente */
-    .nav-pills {
-        --bs-nav-pills-border-radius: 10px;
-    }
-
-    .nav-pills .nav-link {
-        padding: 15px 20px !important;
-        margin-bottom: 10px !important;
-        border-radius: 12px !important;
-        font-size: 16px !important;
-        font-weight: 500 !important;
-        display: flex !important;
-        align-items: center !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .nav-pills .nav-link.active {
-        background-color: #DC143C !important;
-        color: white !important;
-        font-weight: 600 !important;
-        box-shadow: 0 6px 20px rgba(220, 20, 60, 0.4) !important;
-        transform: translateX(8px) !important;
-    }
-
-    .nav-pills .nav-link:not(.active) {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: rgba(255, 255, 255, 0.8) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    }
-
-    .nav-pills .nav-link:not(.active):hover {
-        background-color: rgba(220, 20, 60, 0.1) !important;
-        color: #DC143C !important;
-        transform: translateX(5px) !important;
-        border-color: rgba(220, 20, 60, 0.3) !important;
-    }
-
-    /* Mejorar los iconos del menú */
-    .nav-link svg {
-        margin-right: 15px !important;
-        font-size: 20px !important;
-        width: 20px !important;
-        height: 20px !important;
-    }
-
-    /* Título del menú */
-    .nav-pills-header {
-        color: white !important;
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        margin-bottom: 20px !important;
-        padding: 0 10px !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Función para cargar roles desde secrets
-@st.cache_data
-def cargar_roles():
+# Función para escribir en celdas de forma segura
+def escribir_celda_segura(ws, celda, valor, fuente=None):
+    """Escribe en una celda manejando celdas fusionadas"""
     try:
-        roles_data = json.loads(st.secrets["roles_autorizados"]["data"])
-        return roles_data
+        # Verificar si la celda está fusionada
+        cell = ws[celda]
+        if hasattr(cell, 'coordinate'):
+            # Buscar si esta celda es parte de un rango fusionado
+            for merged_range in ws.merged_cells.ranges:
+                if cell.coordinate in merged_range:
+                    # Es una celda fusionada, usar la celda superior izquierda
+                    top_left = merged_range.start_cell
+                    top_left.value = valor
+                    if fuente:
+                        top_left.font = fuente
+                    return
+        
+        # No está fusionada, escribir normalmente
+        cell.value = valor
+        if fuente:
+            cell.font = fuente
+            
     except Exception as e:
-        st.error(f"Error al cargar roles: {e}")
-        return {}
+        st.warning(f"No se pudo escribir en la celda {celda}: {e}")
 
-# Función para obtener información del rol
-def obtener_info_rol(email, roles_data):
-    if email in roles_data:
-        return {
-            "nombre": roles_data[email][0],
-            "nivel": roles_data[email][1],
-            "funciones": roles_data[email][2] if len(roles_data[email]) > 2 else []
+# NUEVA FUNCIÓN: Procesar y redimensionar imagen para Excel
+def procesar_imagen_para_excel(imagen_bytes, max_width=200, max_height=150):
+    """
+    Procesa una imagen para insertarla en Excel:
+    - Redimensiona manteniendo proporción
+    - Optimiza el tamaño del archivo
+    - Convierte a formato compatible
+    """
+    try:
+        # Abrir imagen desde bytes
+        imagen_pil = Image.open(io.BytesIO(imagen_bytes))
+        
+        # Convertir a RGB si es necesario (para compatibilidad)
+        if imagen_pil.mode in ('RGBA', 'P', 'LA'):
+            imagen_pil = imagen_pil.convert('RGB')
+        
+        # Redimensionar manteniendo proporción
+        imagen_pil.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+        
+        # Guardar en formato JPEG optimizado
+        output_buffer = io.BytesIO()
+        imagen_pil.save(output_buffer, format='JPEG', quality=85, optimize=True)
+        output_buffer.seek(0)
+        
+        return output_buffer, imagen_pil.size
+        
+    except Exception as e:
+        st.error(f"Error procesando imagen: {e}")
+        return None, None
+
+# NUEVA FUNCIÓN: Insertar imágenes en Excel
+def insertar_imagenes_en_excel(ws, imagenes_data, celda_inicial="B19"):
+    """
+    Inserta múltiples imágenes en Excel comenzando desde la celda especificada
+    """
+    try:
+        if not imagenes_data:
+            return
+        
+        # Obtener coordenadas de la celda inicial
+        from openpyxl.utils.cell import coordinate_from_string, column_index_from_string
+        col_letter, row_num = coordinate_from_string(celda_inicial)
+        col_num = column_index_from_string(col_letter)
+        
+        # Configuración de layout para las imágenes
+        imagenes_por_fila = 2  # Número de imágenes por fila
+        espacio_horizontal = 220  # Espacio entre imágenes horizontalmente (píxeles)
+        espacio_vertical = 170    # Espacio entre filas de imágenes (píxeles)
+        
+        contador = 0
+        fila_actual = 0
+        
+        for imagen_info in imagenes_data:
+            # Calcular posición de la imagen
+            col_offset = (contador % imagenes_por_fila) * espacio_horizontal
+            row_offset = fila_actual * espacio_vertical
+            
+            # Procesar imagen
+            imagen_buffer, tamaño = procesar_imagen_para_excel(imagen_info['bytes'])
+            
+            if imagen_buffer and tamaño:
+                # Crear objeto imagen de Excel
+                excel_img = ExcelImage(imagen_buffer)
+                
+                # Ajustar tamaño si es necesario
+                excel_img.width = min(tamaño[0], 200)
+                excel_img.height = min(tamaño[1], 150)
+                
+                # Calcular coordenadas exactas
+                # Posición en píxeles desde la celda inicial
+                anchor_col = col_num - 1  # openpyxl usa índice 0
+                anchor_row = row_num - 1  # openpyxl usa índice 0
+                
+                # Establecer ancla (posición) de la imagen
+                excel_img.anchor = f"{get_column_letter(col_num)}{row_num}"
+                
+                # Ajustar posición con offset
+                if hasattr(excel_img.anchor, 'col'):
+                    excel_img.anchor.col += col_offset // 64  # Aproximación de píxeles a columnas
+                if hasattr(excel_img.anchor, 'row'):
+                    excel_img.anchor.row += row_offset // 20  # Aproximación de píxeles a filas
+                
+                # Agregar imagen a la hoja
+                ws.add_image(excel_img)
+                
+                st.success(f"✅ Imagen {contador + 1} insertada: {imagen_info['nombre']}")
+            
+            contador += 1
+            
+            # Cambiar de fila cuando se complete una fila
+            if contador % imagenes_por_fila == 0:
+                fila_actual += 1
+        
+        # Ajustar altura de las filas para acomodar las imágenes
+        filas_necesarias = (len(imagenes_data) + imagenes_por_fila - 1) // imagenes_por_fila
+        for i in range(filas_necesarias):
+            ws.row_dimensions[row_num + i].height = 120  # Altura en puntos
+        
+        # Ajustar ancho de las columnas
+        for i in range(imagenes_por_fila):
+            col_letter = get_column_letter(col_num + i)
+            ws.column_dimensions[col_letter].width = 30
+            
+        return True
+        
+    except Exception as e:
+        st.error(f"Error insertando imágenes en Excel: {e}")
+        import traceback
+        st.error(f"Detalles del error: {traceback.format_exc()}")
+        return False
+
+# FUNCIÓN MODIFICADA: Crear informe de mal uso con imágenes
+def crear_informe_mal_uso_completo(drive_service, plantilla_id, carpeta_destino_id, datos_formulario, imagenes_data=None):
+    """Crea copia de plantilla de mal uso, llena datos y sube archivo final a Drive CON IMÁGENES"""
+    try:
+        # 1. Crear copia de la plantilla
+        nombre_copia = f"Informe_MalUso_{datos_formulario['codigo_informe']}"
+        copy_metadata = {
+            'name': nombre_copia,
+            'parents': [carpeta_destino_id]
         }
-    return None
+        
+        copia = drive_service.files().copy(
+            fileId=plantilla_id,
+            body=copy_metadata,
+            fields='id,name,webViewLink'
+        ).execute()
+        
+        copia_id = copia['id']
+        
+        # 2. Descargar la copia para editar
+        file_metadata = drive_service.files().get(fileId=copia_id, fields='mimeType').execute()
+        mime_type = file_metadata.get('mimeType')
+        
+        if mime_type == 'application/vnd.google-apps.spreadsheet':
+            request = drive_service.files().export_media(
+                fileId=copia_id,
+                mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+        else:
+            request = drive_service.files().get_media(fileId=copia_id)
+        
+        file_io = io.BytesIO()
+        downloader = MediaIoBaseDownload(file_io, request)
+        
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+        
+        file_io.seek(0)
+        
+        # 3. Editar el archivo Excel con los datos
+        wb = openpyxl.load_workbook(file_io)
+        ws = wb.active
+        fuente = Font(name="Albert Sans", size=8)
 
-# Función para obtener menús según el rol
-def obtener_menus_por_rol(nivel):
-    menus_base = ["Inicio", "Base de Datos"]
-    
-    if nivel == 0:  # Pasante 0
-        return menus_base + ["Informes Técnicos", "Fichas Técnicas", "Informes Servicio Técnico"]
-    elif nivel == 1:  # Pasante 1
-        return menus_base + ["Mantenimientos", "Informes Técnicos", "Inventario"]
-    elif nivel == 2:  # Pasante 2
-        return menus_base + ["Mantenimientos", "Informes Técnicos", "Asignación Tareas", "Gestión Pasantes", "Inventario"]
-    elif nivel == 3:  # Practicante Preprofesional
-        return menus_base + ["Supervisión", "Mantenimientos", "Informes Técnicos", "Asignación Tareas", "Pasantes"]
-    elif nivel == 4:  # Ingeniero Junior
-        return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Asignación Tareas", "Reportes", "Escáner QR"]
-    elif nivel == 5:  # Ingeniero Clínico (Jefe)
-        return menus_base + ["Crear Carpeta","Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Seguridad Eléctrica", "Mal uso","Fichas Técnicas"]
-    elif nivel == 6:  # Personal de Salud
-        return ["Escáner QR", "Reportar Evento", "Mis Reportes"]
-    else:
-        return menus_base
+        # Llenar datos usando la función segura - AJUSTAR CELDAS SEGÚN TU TEMPLATE
+        escribir_celda_segura(ws, "J6", datos_formulario['codigo_informe'], fuente)  # Código de informe
+        escribir_celda_segura(ws, "C5", datos_formulario['sede'], fuente)            # Sede
+        escribir_celda_segura(ws, "C6", datos_formulario['upss'], fuente)            # UPSS
+        escribir_celda_segura(ws, "C7", datos_formulario['servicio'], fuente)        # Servicio
+        
+        # Información del equipo y personal
+        escribir_celda_segura(ws, "B10", datos_formulario['personal_asignado'], fuente)  # Personal asignado
+        escribir_celda_segura(ws, "F10", datos_formulario['equipo_nombre'], fuente)     # Nombre del equipo
+        escribir_celda_segura(ws, "I10", datos_formulario['marca'], fuente)            # Marca
+        escribir_celda_segura(ws, "K10", datos_formulario['modelo'], fuente)           # Modelo
+        escribir_celda_segura(ws, "M10", datos_formulario['serie'], fuente)            # Serie
+        
+        # Inconveniente reportado
+        escribir_celda_segura(ws, "B13", datos_formulario['inconveniente'], fuente)
+        
+        # ============== INSERTAR IMÁGENES EN LA CELDA B19 ==============
+        if imagenes_data and len(imagenes_data) > 0:
+            st.info(f"🖼️ Insertando {len(imagenes_data)} imágenes en el Excel...")
+            
+            # Limpiar el contenido de texto de la celda B19 primero
+            escribir_celda_segura(ws, "B19", "", fuente)
+            
+            # Insertar las imágenes reales
+            exito_imagenes = insertar_imagenes_en_excel(ws, imagenes_data, "B19")
+            
+            if exito_imagenes:
+                st.success(f"✅ {len(imagenes_data)} imágenes insertadas correctamente en B19")
+            else:
+                # Fallback: insertar texto informativo si falla la inserción de imágenes
+                texto_fallback = f"[{len(imagenes_data)} imágenes adjuntas - Error al insertar]"
+                escribir_celda_segura(ws, "B19", texto_fallback, fuente)
+        else:
+            # Si no hay imágenes, dejar celda vacía o con texto informativo
+            escribir_celda_segura(ws, "B19", "Sin imágenes adjuntas", fuente)
+        
+        # 4. Guardar archivo editado
+        archivo_editado = io.BytesIO()
+        wb.save(archivo_editado)
+        archivo_editado.seek(0)
+        
+        # 5. Actualizar archivo en Drive
+        media = MediaIoBaseUpload(
+            archivo_editado,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
+        resultado_final = drive_service.files().update(
+            fileId=copia_id,
+            media_body=media,
+            fields='id,name,webViewLink'
+        ).execute()
+        
+        return resultado_final, archivo_editado
+        
+    except Exception as e:
+        st.error(f"Error creando informe de mal uso: {e}")
+        import traceback
+        st.error(f"Detalles del error: {traceback.format_exc()}")
+        return None, None
 
-# Función para obtener iconos de menú
-def obtener_iconos_menu(menus):
-    iconos = {
-        "Inicio": "house",
-        "Base de Datos": "database",
-        "Dashboard KPIs": "graph-up",
-        "Generador QR": "qr-code",
-        "Asignación Tareas": "clipboard-check",
-        "Gestión Usuarios": "people",
-        "Reportes": "file-earmark-text",
-        "Rendimiento Equipo": "award",
-        #"Cronograma": "calendar3",
-        "Escáner QR": "camera",
-        "Reportar Evento": "exclamation-triangle",
-        "Fichas Técnicas": "file-medical",
-        "Informes Técnicos": "file-earmark-pdf",  # ← NUEVO ICONO
-        "Informes Servicio Técnico": "wrench-adjustable",
-        "Mantenimientos": "tools",
-        "Inventario": "box-seam",
-        "Gestión Pasantes": "person-badge",
-        "Supervisión": "eye",
-        "Pasantes": "person-workspace",
-        "Mis Reportes": "file-person",
-        "Mal uso": "exclamation-octagon",  
-        "Seguridad Eléctrica": "shield-lock",
-        "Crear Carpeta": "plus-square",
-        "Fichas Técnicas": "file-text"
-    }
-    return [iconos.get(menu, "circle") for menu in menus]
+# Función alternativa para debugging - inspeccionar celdas fusionadas
+def inspeccionar_plantilla(drive_service, plantilla_id):
+    """Función para inspeccionar qué celdas están fusionadas en la plantilla"""
+    try:
+        # Crear copia temporal
+        copy_metadata = {'name': 'temp_inspection'}
+        copia = drive_service.files().copy(fileId=plantilla_id, body=copy_metadata).execute()
+        copia_id = copia['id']
+        
+        # Descargar
+        request = drive_service.files().get_media(fileId=copia_id)
+        file_io = io.BytesIO()
+        downloader = MediaIoBaseDownload(file_io, request)
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+        file_io.seek(0)
+        
+        # Inspeccionar
+        wb = openpyxl.load_workbook(file_io)
+        ws = wb.active
+        
+        st.write("### 🔍 Celdas fusionadas encontradas:")
+        for merged_range in ws.merged_cells.ranges:
+            st.write(f"- Rango fusionado: {merged_range}")
+            
+        # Eliminar copia temporal
+        drive_service.files().delete(fileId=copia_id).execute()
+        
+    except Exception as e:
+        st.error(f"Error inspeccionando plantilla: {e}")
 
-# Función para mostrar la pantalla de login
-def mostrar_login():
-    # CSS corregido - eliminar contenedores de imagen
-    st.markdown("""
-    <style>
-    /* Eliminar elementos específicos de Streamlit */
-    header[data-testid="stHeader"] {
-        display: none !important;
-    }
+# Cargar datos desde Google Sheets
+@st.cache_data
+def cargar_datos():
+    info = st.secrets["google_service_account"]
+    scope = ['https://www.googleapis.com/auth/spreadsheets',
+             'https://www.googleapis.com/auth/drive']
+    credenciales = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+    cliente = gspread.authorize(credenciales)
+    hoja = cliente.open("Base de datos").sheet1
+    datos = hoja.get_all_records()
+    return pd.DataFrame(datos)
+
+# Función para gestionar imágenes (nueva funcionalidad)
+def gestionar_imagenes():
+    """Maneja la captura y subida de imágenes"""
+    st.markdown("### 📷 Imágenes Referenciales")
     
-    .stDeployButton {
-        display: none !important;
-    }
+    # Inicializar session state para imágenes si no existe
+    if 'imagenes_capturadas' not in st.session_state:
+        st.session_state.imagenes_capturadas = []
     
-    footer {
-        display: none !important;
-    }
+    # Pestañas para diferentes métodos de captura
+    tab1, tab2, tab3 = st.tabs(["📷 Tomar Foto", "📁 Subir Archivo", "🖼️ Imágenes Capturadas"])
     
-    /* Eliminar contenedores y fondos de imagen */
-    .stImage {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
+    with tab1:
+        st.markdown("#### 📸 Capturar con Cámara")
+        
+        # Widget de cámara
+        foto_capturada = st.camera_input("Toma una foto del incidente")
+        
+        if foto_capturada is not None:
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                # Mostrar vista previa
+                imagen = Image.open(foto_capturada)
+                st.image(imagen, caption="Vista previa de la foto capturada", width=300)
+            
+            with col2:
+                # Botón para guardar la foto
+                if st.button("💾 Guardar Foto", key="guardar_camera"):
+                    # Convertir imagen a bytes
+                    img_bytes = foto_capturada.getvalue()
+                    
+                    # Generar nombre único
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    nombre_imagen = f"foto_camara_{timestamp}.jpg"
+                    
+                    # Guardar en session state
+                    st.session_state.imagenes_capturadas.append({
+                        'nombre': nombre_imagen,
+                        'bytes': img_bytes,
+                        'tipo': 'camera',
+                        'timestamp': timestamp
+                    })
+                    
+                    st.success(f"✅ Foto guardada: {nombre_imagen}")
+                    st.rerun()
     
-    .stImage > div {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
+    with tab2:
+        st.markdown("#### 📁 Subir desde Dispositivo")
+        
+        # File uploader tradicional
+        archivos_subidos = st.file_uploader(
+            "Selecciona imágenes desde tu dispositivo",
+            accept_multiple_files=True,
+            type=['png', 'jpg', 'jpeg', 'webp'],
+            help="Puedes seleccionar múltiples imágenes a la vez"
+        )
+        
+        if archivos_subidos:
+            for archivo in archivos_subidos:
+                col1, col2 = st.columns([3, 1])
+                
+                with col1:
+                    # Mostrar vista previa
+                    imagen = Image.open(archivo)
+                    st.image(imagen, caption=archivo.name, width=300)
+                
+                with col2:
+                    # Botón para agregar a la colección
+                    if st.button(f"➕ Agregar", key=f"add_{archivo.name}"):
+                        # Verificar si ya existe
+                        existe = any(img['nombre'] == archivo.name for img in st.session_state.imagenes_capturadas)
+                        
+                        if not existe:
+                            st.session_state.imagenes_capturadas.append({
+                                'nombre': archivo.name,
+                                'bytes': archivo.getvalue(),
+                                'tipo': 'upload',
+                                'timestamp': datetime.now().strftime("%Y%m%d_%H%M%S")
+                            })
+                            st.success(f"✅ Agregada: {archivo.name}")
+                            st.rerun()
+                        else:
+                            st.warning(f"⚠️ Ya existe: {archivo.name}")
     
-    /* Eliminar cualquier contenedor que rodee la imagen */
-    div[data-testid="stImage"] {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
+    with tab3:
+        st.markdown("#### 🖼️ Imágenes para Insertar en Excel")
+        
+        if st.session_state.imagenes_capturadas:
+            st.success(f"📊 **Total de imágenes:** {len(st.session_state.imagenes_capturadas)}")
+            st.info("🎯 **Estas imágenes se insertarán directamente en la celda B19 del Excel**")
+            
+            # Mostrar todas las imágenes guardadas
+            cols = st.columns(3)
+            
+            for i, img_data in enumerate(st.session_state.imagenes_capturadas):
+                with cols[i % 3]:
+                    # Mostrar imagen
+                    imagen = Image.open(io.BytesIO(img_data['bytes']))
+                    st.image(imagen, caption=img_data['nombre'], width=200)
+                    
+                    # Información adicional
+                    st.caption(f"🕒 {img_data['timestamp']}")
+                    st.caption(f"📱 Fuente: {'Cámara' if img_data['tipo'] == 'camera' else 'Archivo'}")
+                    
+                    # Botón para eliminar
+                    if st.button(f"🗑️ Eliminar", key=f"del_{i}"):
+                        st.session_state.imagenes_capturadas.pop(i)
+                        st.rerun()
+            
+            # Botones de gestión
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("🗑️ **Limpiar Todas**", use_container_width=True):
+                    st.session_state.imagenes_capturadas = []
+                    st.success("✅ Todas las imágenes eliminadas")
+                    st.rerun()
+            
+            with col2:
+                if st.button("💾 **Descargar ZIP**", use_container_width=True):
+                    import zipfile
+                    
+                    # Crear ZIP con todas las imágenes
+                    zip_buffer = io.BytesIO()
+                    
+                    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                        for img_data in st.session_state.imagenes_capturadas:
+                            zip_file.writestr(img_data['nombre'], img_data['bytes'])
+                    
+                    zip_buffer.seek(0)
+                    
+                    st.download_button(
+                        label="⬇️ Descargar ZIP",
+                        data=zip_buffer,
+                        file_name=f"imagenes_incidente_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+                        mime="application/zip"
+                    )
+        else:
+            st.info("📝 No hay imágenes guardadas aún. Usa las pestañas anteriores para capturar o subir imágenes.")
+            st.warning("⚠️ **Sin imágenes, la celda B19 del Excel quedará vacía.**")
     
-    /* Asegurar que las columnas también sean transparentes */
-    .stColumn {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
+    return st.session_state.imagenes_capturadas
+
+# FUNCIÓN PRINCIPAL PARA INFORMES DE MAL USO (MODIFICADA)
+def mostrar_informes_mal_uso():
+    """Función principal del módulo de informes de mal uso"""
     
-    .stColumn > div {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
+    # IDs de Google Drive - CAMBIAR POR TUS IDs REALES
+    PLANTILLA_MAL_USO_ID = "1mW0gzxNAtyd02FSN15Ru39IUZZAwWe-o"  
+    CARPETA_MAL_USO_ID = "1wD8J5xy8cXCLStOAvx7MxOFGHluVVolf"     
+
+    st.title("📋 Informe de Mal Uso - MEDIFLOW")
+    st.info("🖼️ **Nueva funcionalidad:** Las imágenes se insertarán directamente en la celda B19 del Excel")
+
+    # Información del usuario
+    if hasattr(st.session_state, 'name') and hasattr(st.session_state, 'rol_nombre'):
+        st.info(f"👨‍💼 **Personal:** {st.session_state.name} | **Rol:** {st.session_state.rol_nombre}")
+
+    # Configurar Google Drive
+    drive_service = configurar_drive_api()
+
+    # Botón para debugging (opcional)
+    if st.checkbox("🔧 Modo Debug - Inspeccionar Plantilla"):
+        if st.button("Inspeccionar celdas fusionadas"):
+            inspeccionar_plantilla(drive_service, PLANTILLA_MAL_USO_ID)
+
+    # Cargar base de datos
+    df = cargar_datos()
+
+    # ============== SELECTOR DE EQUIPOS ==============
+    st.markdown("### 🔍 Selección de Equipo/Accesorio/Repuesto")
     
-    .stApp {
-        background: 
-            radial-gradient(ellipse 800px 600px at 15% 85%, 
-                rgba(180, 38, 65, 0.25) 0%, 
-                rgba(180, 38, 65, 0.1) 30%,
-                transparent 60%),
-            radial-gradient(ellipse 900px 500px at 85% 15%, 
-                rgba(255, 195, 49, 0.3) 0%, 
-                rgba(255, 195, 49, 0.15) 30%,
-                transparent 60%),
-            radial-gradient(ellipse 600px 800px at 70% 60%, 
-                rgba(180, 38, 65, 0.15) 0%, 
-                transparent 50%),
-            radial-gradient(ellipse 700px 400px at 30% 40%, 
-                rgba(255, 195, 49, 0.2) 0%, 
-                transparent 50%),
-            linear-gradient(135deg, 
-                #ffffff 0%, 
-                rgba(255, 195, 49, 0.08) 50%, 
-                #ffffff 100%),
-            #ffffff !important;
-        background-size: 120% 120%, 130% 130%, 110% 110%, 115% 115%, 100% 100%, 100% 100% !important;
-        animation: waveFlow 20s ease-in-out infinite !important;
-        min-height: 100vh !important;
-    }
-     
-    @keyframes waveFlow {
-        0%, 100% { 
-            background-position: 0% 0%, 100% 0%, 70% 60%, 30% 40%, 0% 0%, 0% 0%; 
+    equipos = []
+    for _, row in df.iterrows():
+        equipo = {
+            'codigo_nuevo': row.get('Codigo nuevo', ''),
+            'equipo': row.get('EQUIPO', ''),
+            'marca': row.get('MARCA', ''),
+            'modelo': row.get('MODELO', ''),
+            'serie': row.get('SERIE', ''),
+            'area': row.get('AREA', ''),
+            'ubicacion': row.get('UBICACION', ''),
         }
-        33% { 
-            background-position: 10% 15%, 90% 10%, 60% 50%, 40% 30%, 0% 0%, 0% 0%; 
-        }
-        66% { 
-            background-position: 5% 25%, 95% 5%, 80% 70%, 20% 50%, 0% 0%, 0% 0%; 
-        }
-    }
-                      
-    /* Efecto de brillo */
-    .login-container::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-        transform: rotate(45deg);
-        animation: shine 3s infinite;
-        z-index: 1;
-    }
-    
-    @keyframes shine {
-        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-        50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-        100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    }
-    
-    /* Hover effect */
-    .login-container:hover {
-        transform: translateY(-10px) scale(1.02) !important;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 
-            0 20px 60px 0 rgba(31, 38, 135, 0.5),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
-    }
-    
-    /* Botón con gradiente y efectos */
-    .stButton > button {
-        background: linear-gradient(135deg, #b42641 0%, #ff6b6b 50%, #ffc331 100%) !important;
-        border: none !important;
-        border-radius: 50px !important;
-        padding: 18px 40px !important;
-        font-weight: 700 !important;
-        font-size: 16px !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        color: white !important;
-        width: 100% !important;
-        margin-top: 30px !important;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-        box-shadow: 0 8px 25px rgba(180, 38, 65, 0.3) !important;
-        position: relative !important;
-        overflow: hidden !important;
-        z-index: 10 !important;
-    }
-    
-    .stButton > button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s;
-    }
-    
-    .stButton > button:hover::before {
-        left: 100%;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 15px 40px rgba(180, 38, 65, 0.4) !important;
-        background: linear-gradient(135deg, #a0213a 0%, #ff5252 50%, #e6b02e 100%) !important;
-    }
-    
-    /* Logo container con efectos - asegurar que esté por encima */
-    .logo-container {
-        margin-bottom: 40px !important;
-        padding: 20px !important;
-        position: relative !important;
-        z-index: 5 !important;
-        background: transparent !important;
-    }
-    
-    .logo-container::after {
-        content: '';
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80px;
-        height: 4px;
-        background: linear-gradient(90deg, #b42641, #ffc331, #b42641);
-        border-radius: 2px;
-        animation: pulse 2s ease-in-out infinite;
-        z-index: 6;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
-        50% { opacity: 1; transform: translateX(-50%) scaleX(1.2); }
-    }
-    
-    /* Texto con sombras suaves */
-    .content-text {
-        z-index: 5 !important;
-        position: relative !important;
-    }
-    
-    .content-text h1 {
-        color: rgba(44, 62, 80, 1) !important;
-        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-        margin-bottom: 25px !important;
-        font-weight: 700 !important;
-        font-size: 36px !important;
-        letter-spacing: -0.5px !important;
-    }
-    
-    .content-text p {
-        color: rgba(52, 73, 94, 1) !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-    }
-    
-    /* Asegurar que todos los contenidos estén por encima del efecto de brillo */
-    .logo-container *, 
-    .content-text *, 
-    .stButton *,
-    .stImage *,
-    .stColumn * {
-        position: relative !important;
-        z-index: 10 !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-         
-    # Espacio superior
-    st.write("")
-    st.write("")
-         
-    # Centrar contenido
-    col1, col2, col3 = st.columns([1, 2, 1])
-         
-    with col2:
-        # Logo con tu código específico para centrar
-        try:
-            # Usar columnas internas para centrar la imagen
-            img_col1, img_col2, img_col3 = st.columns([1.3, 2, 1.5])
-            with img_col2:
-                st.image("static/MEDIFLOW LOGO.png", width=260)
-        except:
-            st.error("No se pudo cargar el logo")
-                 
-        # Contenido elegante
-        st.markdown("""
-        <div class="content-text" style="text-align: center; margin: 25px 0;">
-            <h1>¡Bienvenido!</h1>
-            <p style="font-size: 18px; line-height: 1.7; margin-bottom: 20px; font-weight: 400;">
-                Accede al sistema integral de gestión para equipos médicos
-            </p>
-            <p style="font-size: 16px; font-weight: 500;">
-                Usa tu cuenta autorizada para continuar
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-                 
-        if st.button("🔑 Ingresar con Google",
-                     type="primary",
-                     use_container_width=True,
-                     help="Haz clic para iniciar sesión con tu cuenta de Google"):
-            st.login("google")
+        equipos.append(equipo)
 
-# Verificar si el usuario está logueado
-if not st.user.is_logged_in:
-    mostrar_login()
-    st.stop()
+    metodo_seleccion = st.radio(
+        "¿Cómo deseas seleccionar el equipo?",
+        ["🔍 Selector inteligente", "⌨️ Código manual"],
+        horizontal=True
+    )
 
-# Cargar roles desde secrets
-roles_data = cargar_roles()
-email = st.user.email
-name = st.user.name
-rol_info = obtener_info_rol(email, roles_data)
+    marca = modelo = equipo_nombre = serie = codigo_equipo = ""
+    area_equipo = ubicacion_equipo = ""
 
-# Acceso denegado si el correo no está en la lista
-if rol_info is None:
-    st.error("🚫 Acceso denegado. Tu cuenta no está autorizada.")
-    st.info(f"📧 Cuenta utilizada: {email}")
-    st.warning("Contacta al Ingeniero Clínico para solicitar acceso al sistema.")
+    if metodo_seleccion == "🔍 Selector inteligente":
+        areas_disponibles = sorted(list(set([eq['area'] for eq in equipos if eq['area']])))
+        area_filtro = st.selectbox("🏢 Filtrar por Área", ["Todas"] + areas_disponibles)
+        
+        equipos_filtrados = equipos
+        if area_filtro != "Todas":
+            equipos_filtrados = [eq for eq in equipos if eq['area'] == area_filtro]
+        
+        if equipos_filtrados:
+            opciones_equipos = []
+            for eq in equipos_filtrados:
+                opcion = f"{eq['codigo_nuevo']} - {eq['equipo']}"
+                if eq['area']:
+                    opcion += f" ({eq['area']})"
+                if eq['ubicacion']:
+                    opcion += f" - {eq['ubicacion']}"
+                opciones_equipos.append(opcion)
+            
+            equipo_seleccionado = st.selectbox("🔧 Seleccionar Equipo", opciones_equipos)
+            indice_equipo = opciones_equipos.index(equipo_seleccionado)
+            equipo_data = equipos_filtrados[indice_equipo]
+            
+            codigo_equipo = equipo_data['codigo_nuevo']
+            equipo_nombre = equipo_data['equipo']
+            marca = equipo_data['marca']
+            modelo = equipo_data['modelo']
+            serie = equipo_data['serie']
+            area_equipo = equipo_data['area']
+            ubicacion_equipo = equipo_data['ubicacion']
+            
+            with st.expander("🔍 Detalles del Equipo Seleccionado", expanded=True):
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write(f"**🏷️ Código:** {codigo_equipo}")
+                    st.write(f"**⚙️ Equipo:** {equipo_nombre}")
+                    st.write(f"**🏭 Marca:** {marca}")
+                with col2:
+                    st.write(f"**📱 Modelo:** {modelo}")
+                    st.write(f"**🔢 Serie:** {serie}")
+                    st.write(f"**📍 Área:** {area_equipo}")
+        else:
+            st.warning("⚠️ No se encontraron equipos para el área seleccionada")
+    
+    else:  # Código manual
+        codigo_input = st.text_input("🔍 Ingrese el código del equipo (Ej: EQU-0000001)")
+        equipo_info = df[df["Codigo nuevo"] == codigo_input]
+        
+        if not equipo_info.empty:
+            equipo_row = equipo_info.iloc[0]
+            codigo_equipo = codigo_input
+            marca = equipo_row["MARCA"]
+            modelo = equipo_row["MODELO"]
+            equipo_nombre = equipo_row["EQUIPO"]
+            serie = equipo_row["SERIE"]
+            area_equipo = equipo_row.get("AREA", "")
+            ubicacion_equipo = equipo_row.get("UBICACION", "")
+            
+            st.success(f"✅ **Equipo encontrado:** {equipo_nombre}")
+
+    # ============== INFORMACIÓN DEL INFORME ==============
+    st.markdown("### 🏥 Información del Informe")
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🔄 Intentar con otra cuenta"):
-            st.logout()
+        sede = st.selectbox("🏥 Sede", [
+            "Clínica Médica Cayetano Heredia",
+            "Policlínico Lince", 
+            "Centro de diagnóstico por imágenes",
+            "Anexo de Logística"
+        ])
+        
+        servicio = st.selectbox("🔧 Servicio", [
+            "Informe de Mal Uso",
+            "Reporte de Incidente",
+            "Evaluación de Daños",
+            "Otro"
+        ])
+    
     with col2:
-        if st.button("📞 Contactar Administrador"):
-            st.info("Contacta a: daang0406@gmail.com")
-    st.stop()
+        upss = st.selectbox("🏢 UPSS", [
+            "Diagnóstico por imágenes",
+            "Emergencias",
+            "Unidad de Cuidados Intensivos", 
+            "Centro Quirúrgico",
+            "Centro Obstétrico",
+            "Consulta Externa",
+            "Laboratorio",
+            "Anatomía Patológica"
+        ])
+        
+        personal_asignado = st.text_input("👨‍💼 Nombre del personal asignado", 
+                                        value=st.session_state.get('name', ''))
 
-# Extraer información del rol
-rol_nombre = rol_info["nombre"]
-rol_nivel = rol_info["nivel"]
-funciones = rol_info["funciones"]
-
-# Obtener menús según el rol
-menus_usuario = obtener_menus_por_rol(rol_nivel)
-iconos_menu = obtener_iconos_menu(menus_usuario)
-
-# Título principal
-st.title("🏥 MEDIFLOW: Plataforma de Trazabilidad y Gestión Clínica")
-
-# Sidebar con información del usuario y menú
-with st.sidebar:
-    # Información del usuario con estilo Cayetano (SIN COLUMNAS)
-    st.markdown(f"""
-    <div style="
-        background: linear-gradient(135deg, #B71C1C 0%, #DC143C 100%);
-        padding: 20px; 
-        border-radius: 15px; 
-        margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
-        text-align: center;
-        color: white;
-        width: 100%;
-    ">
-        <div style="
-            background-color: rgba(255, 255, 255, 0.2);
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            margin: 0 auto 15px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        ">
-            👤
-        </div>
-        <h3 style="margin: 0 0 8px 0; color: white; font-size: 18px; font-weight: bold;">
-            {name}
-        </h3>
-        <p style="margin: 0 0 12px 0; font-size: 14px; opacity: 0.9;">
-            {email}
-        </p>
-        <div style="
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 8px 12px;
-            border-radius: 20px;
-            margin: 10px 0;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        ">
-            <span style="font-size: 16px;">🛡️</span>
-            <span style="font-weight: bold; font-size: 14px;">{rol_nombre}</span>
-        </div>
-        <p style="margin: 8px 0 0 0; font-size: 16px; font-weight: bold;">
-            Nivel: {rol_nivel}
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # ============== DETALLES DEL MAL USO ==============
+    st.markdown("### 📝 Detalles del Mal Uso")
     
-    # Funciones del rol
-    with st.expander("🎯 Mis Funciones"):
-        for funcion in funciones:
-            st.write(f"• {funcion}")
-    
-    st.markdown("---")
-    
-    # Menú principal (SIN COLUMNAS)
-    menu = option_menu(
-        menu_title="Menú Principal",
-        options=menus_usuario,
-        icons=iconos_menu,
-        default_index=0,
-        styles={
-            "container": {"padding": "0!important", "width": "100%"},
-            "icon": {"color": "#DC143C", "font-size": "18px"},
-            "nav-link": {
-                "font-size": "16px", 
-                "text-align": "left", 
-                "margin": "0px",
-                "padding": "15px 20px",
-                "width": "100%"
-            },
-            "nav-link-selected": {"background-color": "#DC143C"},
-        }
+    inconveniente = st.text_area(
+        "🚨 Inconveniente reportado / Motivo del servicio", 
+        height=150,
+        placeholder="Describe detalladamente el mal uso, incidente o daño reportado..."
     )
 
-# Contenido principal según la selección del menú
-if menu == "Inicio":
-    st.markdown(f"## 👋 Hola, {name}")
-    
-    # Mensaje personalizado según el rol
-    if rol_nivel == 5:  # Ingeniero Clínico
-        st.success("👨‍💼 Acceso completo al sistema como Jefe del Departamento de Ingeniería Clínica.")
-        
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
-            st.metric("📊 KPIs", "Dashboard", "Activo")
-        with col2:
-            st.metric("👥 Equipo", "6 miembros", "+1")
-        with col3:
-            st.metric("⚙️ Equipos", "150", "3 nuevos")
-        with col4:
-            st.metric("🔧 Mantenimientos", "12 programados", "Esta semana")
-        with col5:
-            if st.button("📱 Escáner QR", type="primary", use_container_width=True):
-                st.info("Redirigiendo al escáner QR...")
-        
-    elif rol_nivel == 4:  # Ingeniero Junior
-        st.info("👨‍🔧 Gestiona mantenimientos y supervisa las operaciones técnicas del departamento.")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("🔧 Mantenimientos", "8 programados", "Hoy")
-        with col2:
-            st.metric("📋 Reportes", "3 pendientes", "Revisión")
-        with col3:
-            st.metric("👥 Supervisión", "4 áreas", "Activas")
-            
-    elif rol_nivel in [1, 2, 3]:  # Pasantes y Practicante
-        st.info(f"👨‍🎓 {rol_nombre} - Acceso a funciones de mantenimiento e inventario.")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("📋 Mis Tareas", "5 pendientes", "Hoy")
-        with col2:
-            st.metric("🔧 Mantenimientos", "Asignados", "3 equipos")
-            
-    elif rol_nivel == 6:  # Personal de Salud
-        st.info("👩‍⚕️ Reporta eventos y utiliza el escáner QR para equipos médicos.")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("📱 Escáner QR", type="primary", use_container_width=True):
-                st.info("Redirigiendo al escáner QR...")
-        with col2:
-            if st.button("📝 Reportar Evento", type="secondary", use_container_width=True):
-                st.info("Módulo de reportes en desarrollo")
-    
-    # Actividad reciente
-    st.markdown("### 📋 Actividad Reciente")
-    st.info("🔄 Sistema de Ingeniería Clínica inicializado correctamente")
-    if rol_nivel >= 3:
-        st.success("✅ Permisos de supervisión activos")
-    if rol_nivel >= 5:
-        st.success("🎛️ Panel de administración disponible")
+    # ============== IMÁGENES REFERENCIALES (FUNCIONALIDAD MEJORADA) ==============
+    imagenes_guardadas = gestionar_imagenes()
 
-elif menu == "Base de Datos":
-    mostrar_base_datos()
-
-elif menu == "Dashboard KPIs":
-    mostrar_modulo_dashboard()
-
-# Generador QR
-elif menu == "Generador QR" and rol_nivel >= 5:
-    generar_qrs()
-
-# ← NUEVO MÓDULO DE INFORMES TÉCNICOS
-elif menu == "Informes Técnicos":
-    # Pasar información del rol al módulo de informes
-    if 'name' not in st.session_state:
-        st.session_state.name = name
-    if 'rol_nombre' not in st.session_state:
-        st.session_state.rol_nombre = rol_nombre
-    if 'email' not in st.session_state:
-        st.session_state.email = email
-    mostrar_informes_tecnicos()
-
-elif menu == "Asignación Tareas" and rol_nivel >= 2:
-    # Pasar información del rol al módulo
-    if 'email' not in st.session_state:
-        st.session_state.email = email
-    if 'name' not in st.session_state:
-        st.session_state.name = name
-    if 'rol_nivel' not in st.session_state:
-        st.session_state.rol_nivel = rol_nivel
-    
-    mostrar_modulo_asignacion()
-
-elif menu == "Gestión Usuarios":
-    mostrar_modulo_gestion_usuarios()
-
-elif menu == "Mantenimientos":
-    st.title("🔧 Gestión de Mantenimientos")
-    st.info("⚙️ Módulo en desarrollo - Sistema de mantenimientos preventivos y correctivos")
-
-elif menu == "Inventario":
-    st.title("📦 Control de Inventario")
-    st.info("📋 Módulo en desarrollo - Gestión de inventario de equipos médicos")
-
-elif menu == "Escáner QR" and rol_nivel in [4, 5, 6]:
-    # Pasar información del rol al escáner
-    if 'rol_nivel' not in st.session_state:
-        st.session_state.rol_nivel = rol_nivel
-    if 'rol_nombre' not in st.session_state:
-        st.session_state.rol_nombre = rol_nombre
-    
-    mostrar_escaner_qr()
-
-elif menu == "Reportar Evento" and rol_nivel == 6:
-    st.title("📝 Reportar Evento")
-    st.info("🚨 Módulo en desarrollo - Sistema de reportes de eventos técnicos")
-
-
-elif menu == "Mis Reportes":
-    st.title("📊 Mis Reportes")
-    st.info("📈 Módulo en desarrollo - Reportes personalizados")
-
-elif menu == "Informes Servicio Técnico":
-    st.title("📑 Informes de Servicio Técnico")
-    # Pasar información del rol al módulo de informes de servicio
-    if 'name' not in st.session_state:
-        st.session_state.name = name
-    if 'rol_nombre' not in st.session_state:
-        st.session_state.rol_nombre = rol_nombre
-    if 'email' not in st.session_state:
-        st.session_state.email = email
-    mostrar_informes_servicio_tecnico()
-
-elif menu == "Seguridad Eléctrica":
-    st.title("📑 Informes de Prueba de Seguridad Eléctrica")
-    # Pasar información del rol al módulo de informes de servicio
-    if 'name' not in st.session_state:
-        st.session_state.name = name
-    if 'rol_nombre' not in st.session_state:
-        st.session_state.rol_nombre = rol_nombre
-    if 'email' not in st.session_state:
-        st.session_state.email = email
-    mostrar_pruebas_seguridad_electrica()
-
-elif menu == "Fichas Técnicas":
-    st.title("📑 Informes de Fichas Técnicas")
-    # Pasar información del rol al módulo de informes de servicio
-    if 'name' not in st.session_state:
-        st.session_state.name = name
-    if 'rol_nombre' not in st.session_state:
-        st.session_state.rol_nombre = rol_nombre
-    if 'email' not in st.session_state:
-        st.session_state.email = email
-    mostrar_fichas_tecnicas()
-
-elif menu == "Crear Carpeta":
-    st.title("+ Agregar Carpeta de Nuevo Equipo")
-    
-    # Mostrar información del próximo código
-    nuevo_codigo = obtener_ultimo_codigo()
-    if nuevo_codigo:
-        st.info(f"Se creará una nueva carpeta con el código: **{nuevo_codigo}**")
-        
-        # Botón para ejecutar la creación
-        if st.button("✅ Crear Carpetas", use_container_width=True):
-            # Indicadores de progreso
-            progress = st.progress(0)
-            status = st.empty()
-            
-            # Paso 1: Crear carpeta principal
-            status.text("Creando carpeta principal...")
-            carpeta_id = crear_nueva_carpeta(nuevo_codigo)
-            progress.progress(50)
-            
-            if carpeta_id:
-                # Paso 2: Crear subcarpetas
-                status.text("Creando subcarpetas...")
-                crear_subcarpetas(carpeta_id)
-                progress.progress(100)
-                
-                # Mostrar resultado exitoso
-                st.success(f"✅ Carpeta **{nuevo_codigo}** creada exitosamente con subcarpetas")
-                
-            else:
-                st.error("❌ No se pudo crear la carpeta principal")
+    # ============== CÓDIGO DEL INFORME ==============
+    fecha_actual = datetime.now()
+    if equipo_nombre and modelo and serie:
+        fecha_str = fecha_actual.strftime("%Y%m%d")
+        codigo_informe = f"{fecha_str}-MU-{modelo}-{serie}"  # MU = Mal Uso
+        st.text_input("📄 Código del informe", value=codigo_informe, disabled=True)
     else:
-        st.error("❌ No se pudo obtener el código para la nueva carpeta")
+        codigo_informe = ""
 
+    # ============== BOTÓN PARA GENERAR INFORME ==============
+    st.markdown("---")
+    
+    if st.button("📤 **SUBIR INFORME DE MAL USO A DRIVE**", type="primary", use_container_width=True):
+        if not codigo_informe:
+            st.error("❌ Por favor selecciona un equipo válido")
+            st.stop()
+        
+        if not inconveniente.strip():
+            st.warning("⚠️ Completa el campo obligatorio: inconveniente reportado")
+            st.stop()
+        
+        # Preparar datos del formulario
+        datos_formulario = {
+            'codigo_informe': codigo_informe,
+            'sede': sede,
+            'upss': upss,
+            'servicio': servicio,
+            'personal_asignado': personal_asignado,
+            'equipo_nombre': equipo_nombre,
+            'marca': marca,
+            'modelo': modelo,
+            'serie': serie,
+            'inconveniente': inconveniente,
+            'fecha_generacion': fecha_actual.strftime("%d/%m/%Y"),
+            'num_imagenes': len(imagenes_guardadas)
+        }
+        
+        # Proceso con barra de progreso
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        try:
+            status_text.text("🔄 Procesando informe de mal uso...")
+            progress_bar.progress(10)
+            
+            status_text.text("🖼️ Preparando imágenes para inserción...")
+            progress_bar.progress(25)
+            
+            status_text.text("📋 Creando copia y llenando datos...")
+            progress_bar.progress(50)
+            
+            status_text.text("📷 Insertando imágenes en celda B19...")
+            progress_bar.progress(75)
+            
+            status_text.text("☁️ Subiendo a Google Drive...")
+            progress_bar.progress(90)
+            
+            # Crear informe completo con imágenes
+            resultado_final, archivo_editado = crear_informe_mal_uso_completo(
+                drive_service, 
+                PLANTILLA_MAL_USO_ID, 
+                CARPETA_MAL_USO_ID, 
+                datos_formulario,
+                imagenes_guardadas  # <- PASAR LAS IMÁGENES
+            )
+            
+            if resultado_final:
+                progress_bar.progress(100)
+                status_text.text("✅ ¡Informe de mal uso subido exitosamente!")
+                
+                st.success("🎉 **¡Informe de mal uso subido a Drive con imágenes!**")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.info(f"📁 **Archivo:** {resultado_final['name']}")
+                    st.info(f"🆔 **ID:** {resultado_final['id']}")
+                    st.info(f"📷 **Imágenes insertadas en B19:** {len(imagenes_guardadas)}")
+                
+                with col2:
+                    if 'webViewLink' in resultado_final:
+                        st.markdown(f"🔗 [Ver en Google Drive]({resultado_final['webViewLink']})")
+                    
+                    # Descarga local opcional
+                    if archivo_editado:
+                        archivo_editado.seek(0)
+                        st.download_button(
+                            label="⬇️ Descargar copia local",
+                            data=archivo_editado,
+                            file_name=f"{resultado_final['name']}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+                
+                # Mostrar resumen de lo que se insertó
+                if imagenes_guardadas:
+                    with st.expander("📋 Resumen de imágenes insertadas", expanded=False):
+                        for i, img in enumerate(imagenes_guardadas, 1):
+                            st.write(f"**{i}.** {img['nombre']} ({img['tipo']})")
+                
+                # Limpiar imágenes después de subir exitosamente
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("🧹 **Limpiar imágenes para nuevo informe**", use_container_width=True):
+                        st.session_state.imagenes_capturadas = []
+                        st.success("✅ Imágenes limpiadas")
+                        st.rerun()
+                
+                with col2:
+                    if st.button("📋 **Crear nuevo informe**", use_container_width=True):
+                        st.session_state.imagenes_capturadas = []
+                        st.rerun()
+                        
+            else:
+                st.error("❌ Error al crear el informe")
+                
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
+            progress_bar.empty()
+            status_text.empty()
 
-elif menu == "Gestión Pasantes":
-    st.title("👥 Gestión de Pasantes")
-    st.info("🎓 Módulo en desarrollo - Administración de pasantes")
+    # ============== INFORMACIÓN ADICIONAL ==============
+    with st.expander("ℹ️ Información sobre inserción de imágenes", expanded=False):
+        st.markdown("""
 
-elif menu == "Mal uso":
-    mostrar_informes_mal_uso()
+        ### ✅ **Formatos soportados:**
+        - 📷 **Cámara:** JPG (captura directa)
+        - 📁 **Archivos:** PNG, JPG, JPEG, WEBP
+        
+        ### ⚠️ **Consideraciones importantes:**
+        - Las imágenes grandes se redimensionan automáticamente
+        - El proceso puede tomar unos segundos con múltiples imágenes
+        - Las imágenes quedan permanentemente incrustadas en el Excel
+        """)
 
-elif menu == "Supervisión":
-    st.title("👁️ Supervisión")
-    st.info("🔍 Módulo en desarrollo - Panel de supervisión")
-
-elif menu == "Pasantes":
-    st.title("👨‍🎓 Gestión de Pasantes")
-    st.info("📚 Módulo en desarrollo - Administración de pasantes")
-
-elif menu == "Reportes":
-    mostrar_modulo_reportes()
-
-elif menu == "Rendimiento Equipo":
-    mostrar_rendimiento_equipo()
-
-else:
-    st.title(f"🔧 {menu}")
-    st.info(f"⚙️ Módulo en desarrollo - {menu}")
-
-# Logout en sidebar
-st.sidebar.markdown("---")
-if st.sidebar.button("🚪 Cerrar Sesión", type="secondary", use_container_width=True):
-    st.logout()
-
-# Footer limpio
-st.markdown("---")
-st.markdown("🏥 **MEDIFLOW v1.0** | Enfocado en mantenimiento preventivo y gestión técnica")
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; color: #666; font-size: 14px;'>
+        🚨 <strong>Sistema de Informes de Mal Uso - MEDIFLOW v2.1</strong><br>
+        📷 Con inserción automática de imágenes en Excel | 
+        🔧 Documentación profesional de incidentes
+    </div>
+    """, unsafe_allow_html=True)
