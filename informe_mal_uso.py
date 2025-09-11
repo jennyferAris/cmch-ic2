@@ -5,10 +5,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, time
 import openpyxl
 from openpyxl.styles import Font
+from openpyxl.drawing.image import Image as ExcelImage
+from openpyxl.utils import get_column_letter
 import io
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
-from PIL import Image
+from PIL import Image, ImageOps
 import base64
 
 # Configurar Google Drive API
@@ -49,9 +51,120 @@ def escribir_celda_segura(ws, celda, valor, fuente=None):
     except Exception as e:
         st.warning(f"No se pudo escribir en la celda {celda}: {e}")
 
-# Función para crear informe de mal uso
-def crear_informe_mal_uso_completo(drive_service, plantilla_id, carpeta_destino_id, datos_formulario):
-    """Crea copia de plantilla de mal uso, llena datos y sube archivo final a Drive"""
+# NUEVA FUNCIÓN: Procesar y redimensionar imagen para Excel
+def procesar_imagen_para_excel(imagen_bytes, max_width=200, max_height=150):
+    """
+    Procesa una imagen para insertarla en Excel:
+    - Redimensiona manteniendo proporción
+    - Optimiza el tamaño del archivo
+    - Convierte a formato compatible
+    """
+    try:
+        # Abrir imagen desde bytes
+        imagen_pil = Image.open(io.BytesIO(imagen_bytes))
+        
+        # Convertir a RGB si es necesario (para compatibilidad)
+        if imagen_pil.mode in ('RGBA', 'P', 'LA'):
+            imagen_pil = imagen_pil.convert('RGB')
+        
+        # Redimensionar manteniendo proporción
+        imagen_pil.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+        
+        # Guardar en formato JPEG optimizado
+        output_buffer = io.BytesIO()
+        imagen_pil.save(output_buffer, format='JPEG', quality=85, optimize=True)
+        output_buffer.seek(0)
+        
+        return output_buffer, imagen_pil.size
+        
+    except Exception as e:
+        st.error(f"Error procesando imagen: {e}")
+        return None, None
+
+# NUEVA FUNCIÓN: Insertar imágenes en Excel
+def insertar_imagenes_en_excel(ws, imagenes_data, celda_inicial="B19"):
+    """
+    Inserta múltiples imágenes en Excel comenzando desde la celda especificada
+    """
+    try:
+        if not imagenes_data:
+            return
+        
+        # Obtener coordenadas de la celda inicial
+        from openpyxl.utils.cell import coordinate_from_string, column_index_from_string
+        col_letter, row_num = coordinate_from_string(celda_inicial)
+        col_num = column_index_from_string(col_letter)
+        
+        # Configuración de layout para las imágenes
+        imagenes_por_fila = 2  # Número de imágenes por fila
+        espacio_horizontal = 220  # Espacio entre imágenes horizontalmente (píxeles)
+        espacio_vertical = 170    # Espacio entre filas de imágenes (píxeles)
+        
+        contador = 0
+        fila_actual = 0
+        
+        for imagen_info in imagenes_data:
+            # Calcular posición de la imagen
+            col_offset = (contador % imagenes_por_fila) * espacio_horizontal
+            row_offset = fila_actual * espacio_vertical
+            
+            # Procesar imagen
+            imagen_buffer, tamaño = procesar_imagen_para_excel(imagen_info['bytes'])
+            
+            if imagen_buffer and tamaño:
+                # Crear objeto imagen de Excel
+                excel_img = ExcelImage(imagen_buffer)
+                
+                # Ajustar tamaño si es necesario
+                excel_img.width = min(tamaño[0], 200)
+                excel_img.height = min(tamaño[1], 150)
+                
+                # Calcular coordenadas exactas
+                # Posición en píxeles desde la celda inicial
+                anchor_col = col_num - 1  # openpyxl usa índice 0
+                anchor_row = row_num - 1  # openpyxl usa índice 0
+                
+                # Establecer ancla (posición) de la imagen
+                excel_img.anchor = f"{get_column_letter(col_num)}{row_num}"
+                
+                # Ajustar posición con offset
+                if hasattr(excel_img.anchor, 'col'):
+                    excel_img.anchor.col += col_offset // 64  # Aproximación de píxeles a columnas
+                if hasattr(excel_img.anchor, 'row'):
+                    excel_img.anchor.row += row_offset // 20  # Aproximación de píxeles a filas
+                
+                # Agregar imagen a la hoja
+                ws.add_image(excel_img)
+                
+                st.success(f"✅ Imagen {contador + 1} insertada: {imagen_info['nombre']}")
+            
+            contador += 1
+            
+            # Cambiar de fila cuando se complete una fila
+            if contador % imagenes_por_fila == 0:
+                fila_actual += 1
+        
+        # Ajustar altura de las filas para acomodar las imágenes
+        filas_necesarias = (len(imagenes_data) + imagenes_por_fila - 1) // imagenes_por_fila
+        for i in range(filas_necesarias):
+            ws.row_dimensions[row_num + i].height = 120  # Altura en puntos
+        
+        # Ajustar ancho de las columnas
+        for i in range(imagenes_por_fila):
+            col_letter = get_column_letter(col_num + i)
+            ws.column_dimensions[col_letter].width = 30
+            
+        return True
+        
+    except Exception as e:
+        st.error(f"Error insertando imágenes en Excel: {e}")
+        import traceback
+        st.error(f"Detalles del error: {traceback.format_exc()}")
+        return False
+
+# FUNCIÓN MODIFICADA: Crear informe de mal uso con imágenes
+def crear_informe_mal_uso_completo(drive_service, plantilla_id, carpeta_destino_id, datos_formulario, imagenes_data=None):
+    """Crea copia de plantilla de mal uso, llena datos y sube archivo final a Drive CON IMÁGENES"""
     try:
         # 1. Crear copia de la plantilla
         nombre_copia = f"Informe_MalUso_{datos_formulario['codigo_informe']}"
@@ -110,10 +223,25 @@ def crear_informe_mal_uso_completo(drive_service, plantilla_id, carpeta_destino_
         # Inconveniente reportado
         escribir_celda_segura(ws, "B13", datos_formulario['inconveniente'], fuente)
         
-        # Información de imágenes en la celda B19
-        if datos_formulario.get('num_imagenes', 0) > 0:
-            texto_imagenes = f"Se adjuntan {datos_formulario['num_imagenes']} imagen(es) como evidencia del incidente."
-            escribir_celda_segura(ws, "B19", texto_imagenes, fuente)
+        # ============== INSERTAR IMÁGENES EN LA CELDA B19 ==============
+        if imagenes_data and len(imagenes_data) > 0:
+            st.info(f"🖼️ Insertando {len(imagenes_data)} imágenes en el Excel...")
+            
+            # Limpiar el contenido de texto de la celda B19 primero
+            escribir_celda_segura(ws, "B19", "", fuente)
+            
+            # Insertar las imágenes reales
+            exito_imagenes = insertar_imagenes_en_excel(ws, imagenes_data, "B19")
+            
+            if exito_imagenes:
+                st.success(f"✅ {len(imagenes_data)} imágenes insertadas correctamente en B19")
+            else:
+                # Fallback: insertar texto informativo si falla la inserción de imágenes
+                texto_fallback = f"[{len(imagenes_data)} imágenes adjuntas - Error al insertar]"
+                escribir_celda_segura(ws, "B19", texto_fallback, fuente)
+        else:
+            # Si no hay imágenes, dejar celda vacía o con texto informativo
+            escribir_celda_segura(ws, "B19", "Sin imágenes adjuntas", fuente)
         
         # 4. Guardar archivo editado
         archivo_editado = io.BytesIO()
@@ -270,10 +398,11 @@ def gestionar_imagenes():
                             st.warning(f"⚠️ Ya existe: {archivo.name}")
     
     with tab3:
-        st.markdown("#### 🖼️ Imágenes Guardadas")
+        st.markdown("#### 🖼️ Imágenes para Insertar en Excel")
         
         if st.session_state.imagenes_capturadas:
             st.success(f"📊 **Total de imágenes:** {len(st.session_state.imagenes_capturadas)}")
+            st.info("🎯 **Estas imágenes se insertarán directamente en la celda B19 del Excel**")
             
             # Mostrar todas las imágenes guardadas
             cols = st.columns(3)
@@ -323,10 +452,11 @@ def gestionar_imagenes():
                     )
         else:
             st.info("📝 No hay imágenes guardadas aún. Usa las pestañas anteriores para capturar o subir imágenes.")
+            st.warning("⚠️ **Sin imágenes, la celda B19 del Excel quedará vacía.**")
     
     return st.session_state.imagenes_capturadas
 
-# FUNCIÓN PRINCIPAL PARA INFORMES DE MAL USO
+# FUNCIÓN PRINCIPAL PARA INFORMES DE MAL USO (MODIFICADA)
 def mostrar_informes_mal_uso():
     """Función principal del módulo de informes de mal uso"""
     
@@ -335,6 +465,7 @@ def mostrar_informes_mal_uso():
     CARPETA_MAL_USO_ID = "1wD8J5xy8cXCLStOAvx7MxOFGHluVVolf"     
 
     st.title("📋 Informe de Mal Uso - MEDIFLOW")
+    st.info("🖼️ **Nueva funcionalidad:** Las imágenes se insertarán directamente en la celda B19 del Excel")
 
     # Información del usuario
     if hasattr(st.session_state, 'name') and hasattr(st.session_state, 'rol_nombre'):
@@ -478,7 +609,7 @@ def mostrar_informes_mal_uso():
         placeholder="Describe detalladamente el mal uso, incidente o daño reportado..."
     )
 
-    # ============== IMÁGENES REFERENCIALES (NUEVA FUNCIONALIDAD) ==============
+    # ============== IMÁGENES REFERENCIALES (FUNCIONALIDAD MEJORADA) ==============
     imagenes_guardadas = gestionar_imagenes()
 
     # ============== CÓDIGO DEL INFORME ==============
@@ -524,33 +655,40 @@ def mostrar_informes_mal_uso():
         
         try:
             status_text.text("🔄 Procesando informe de mal uso...")
+            progress_bar.progress(10)
+            
+            status_text.text("🖼️ Preparando imágenes para inserción...")
             progress_bar.progress(25)
             
             status_text.text("📋 Creando copia y llenando datos...")
             progress_bar.progress(50)
             
-            status_text.text("☁️ Subiendo a Google Drive...")
+            status_text.text("📷 Insertando imágenes en celda B19...")
             progress_bar.progress(75)
             
-            # Crear informe completo
+            status_text.text("☁️ Subiendo a Google Drive...")
+            progress_bar.progress(90)
+            
+            # Crear informe completo con imágenes
             resultado_final, archivo_editado = crear_informe_mal_uso_completo(
                 drive_service, 
                 PLANTILLA_MAL_USO_ID, 
                 CARPETA_MAL_USO_ID, 
-                datos_formulario
+                datos_formulario,
+                imagenes_guardadas  # <- PASAR LAS IMÁGENES
             )
             
             if resultado_final:
                 progress_bar.progress(100)
                 status_text.text("✅ ¡Informe de mal uso subido exitosamente!")
                 
-                st.success("🎉 **¡Informe de mal uso subido a Drive!**")
+                st.success("🎉 **¡Informe de mal uso subido a Drive con imágenes!**")
                 
                 col1, col2 = st.columns(2)
                 with col1:
                     st.info(f"📁 **Archivo:** {resultado_final['name']}")
                     st.info(f"🆔 **ID:** {resultado_final['id']}")
-                    st.info(f"📷 **Imágenes adjuntas:** {len(imagenes_guardadas)}")
+                    st.info(f"📷 **Imágenes insertadas en B19:** {len(imagenes_guardadas)}")
                 
                 with col2:
                     if 'webViewLink' in resultado_final:
@@ -560,16 +698,30 @@ def mostrar_informes_mal_uso():
                     if archivo_editado:
                         archivo_editado.seek(0)
                         st.download_button(
-                            label="⬇️ Descargar copia",
+                            label="⬇️ Descargar copia local",
                             data=archivo_editado,
                             file_name=f"{resultado_final['name']}.xlsx",
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                         )
                 
+                # Mostrar resumen de lo que se insertó
+                if imagenes_guardadas:
+                    with st.expander("📋 Resumen de imágenes insertadas", expanded=False):
+                        for i, img in enumerate(imagenes_guardadas, 1):
+                            st.write(f"**{i}.** {img['nombre']} ({img['tipo']})")
+                
                 # Limpiar imágenes después de subir exitosamente
-                if st.button("🧹 Limpiar imágenes para nuevo informe"):
-                    st.session_state.imagenes_capturadas = []
-                    st.rerun()
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("🧹 **Limpiar imágenes para nuevo informe**", use_container_width=True):
+                        st.session_state.imagenes_capturadas = []
+                        st.success("✅ Imágenes limpiadas")
+                        st.rerun()
+                
+                with col2:
+                    if st.button("📋 **Crear nuevo informe**", use_container_width=True):
+                        st.session_state.imagenes_capturadas = []
+                        st.rerun()
                         
             else:
                 st.error("❌ Error al crear el informe")
@@ -579,11 +731,33 @@ def mostrar_informes_mal_uso():
             progress_bar.empty()
             status_text.empty()
 
+    # ============== INFORMACIÓN ADICIONAL ==============
+    with st.expander("ℹ️ Información sobre inserción de imágenes", expanded=False):
+        st.markdown("""
+        ### 🖼️ **Cómo funciona la inserción de imágenes:**
+        
+        1. **📍 Ubicación:** Las imágenes se insertan directamente en la celda **B19** del Excel
+        2. **📐 Diseño:** Máximo 2 imágenes por fila, organizadas automáticamente
+        3. **📏 Tamaño:** Las imágenes se redimensionan automáticamente (máx. 200x150 píxeles)
+        4. **🎨 Formato:** Se convierten a JPEG optimizado para mejor compatibilidad
+        5. **📊 Layout:** Las filas y columnas se ajustan automáticamente para acomodar las imágenes
+        
+        ### ✅ **Formatos soportados:**
+        - 📷 **Cámara:** JPG (captura directa)
+        - 📁 **Archivos:** PNG, JPG, JPEG, WEBP
+        
+        ### ⚠️ **Consideraciones importantes:**
+        - Las imágenes grandes se redimensionan automáticamente
+        - El proceso puede tomar unos segundos con múltiples imágenes
+        - Las imágenes quedan permanentemente incrustadas en el Excel
+        """)
+
     # Footer
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666; font-size: 14px;'>
-        🚨 <strong>Sistema de Informes de Mal Uso - MEDIFLOW</strong><br>
-        Documentación de incidentes y mal uso de equipos médicos
+        🚨 <strong>Sistema de Informes de Mal Uso - MEDIFLOW v2.1</strong><br>
+        📷 Con inserción automática de imágenes en Excel | 
+        🔧 Documentación profesional de incidentes
     </div>
     """, unsafe_allow_html=True)
