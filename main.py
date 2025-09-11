@@ -755,7 +755,7 @@ elif menu == "Gestión Pasantes":
     st.title("👥 Gestión de Pasantes")
     st.info("🎓 Módulo en desarrollo - Administración de pasantes")
 
-elif menu == "Mal Uso":
+elif menu == "Mal uso":
     mostrar_informes_mal_uso()
 
 elif menu == "Supervisión":
