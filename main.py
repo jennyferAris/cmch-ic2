@@ -14,6 +14,7 @@ from informes_servicio_tecnico import mostrar_informes_servicio_tecnico
 from prueba_seguridad_electrica import mostrar_pruebas_seguridad_electrica
 from creador_carpetas import crear_nueva_carpeta, obtener_ultimo_codigo, crear_subcarpetas
 from ficha_tecnica import mostrar_fichas_tecnicas
+from informe_mal_uso import mostrar_informes_mal_uso
 #st.set_page_config(page_title="Sistema de Inventario - IC", layout="wide")
 
 # CONFIGURACIÓN CRÍTICA - AL INICIO DEL ARCHIVO
@@ -154,7 +155,7 @@ def obtener_menus_por_rol(nivel):
     elif nivel == 4:  # Ingeniero Junior
         return menus_base + ["Mantenimientos", "Supervisión", "Informes Técnicos", "Asignación Tareas", "Reportes", "Escáner QR"]
     elif nivel == 5:  # Ingeniero Clínico (Jefe)
-        return menus_base + ["Crear Carpeta","Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Seguridad Eléctrica", "Fichas Técnicas"]
+        return menus_base + ["Crear Carpeta","Dashboard KPIs", "Generador QR", "Escáner QR", "Informes Servicio Técnico", "Asignación Tareas", "Gestión Usuarios", "Reportes", "Rendimiento Equipo", "Seguridad Eléctrica", "Mal uso","Fichas Técnicas"]
     elif nivel == 6:  # Personal de Salud
         return ["Escáner QR", "Reportar Evento", "Mis Reportes"]
     else:
@@ -183,6 +184,7 @@ def obtener_iconos_menu(menus):
         "Supervisión": "eye",
         "Pasantes": "person-workspace",
         "Mis Reportes": "file-person",
+        "Mal uso": "exclamation-octagon",  
         "Seguridad Eléctrica": "shield-lock",
         "Crear Carpeta": "plus-square",
         "Fichas Técnicas": "file-text"
@@ -752,6 +754,9 @@ elif menu == "Crear Carpeta":
 elif menu == "Gestión Pasantes":
     st.title("👥 Gestión de Pasantes")
     st.info("🎓 Módulo en desarrollo - Administración de pasantes")
+
+elif menu == "Mal Uso":
+    mostrar_informes_mal_uso()
 
 elif menu == "Supervisión":
     st.title("👁️ Supervisión")
