@@ -198,4 +198,5 @@ def render_ui():
         except Exception as e:
             st.error(f"Ocurrió un error: {e}")
 
-
+if __name__ == "__main__":
+    render_ui()
