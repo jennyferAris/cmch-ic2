@@ -63,16 +63,20 @@ def list_files_in_folder(service, folder_id: str) -> List[Dict]:
     ).execute()
     return res.get("files", [])
 
-def download_file_bytes(
-    service, file_id: str, mime_type: str, name_fallback: str
-) -> Tuple[bytes, str, str]:
+def download_file_bytes(service, file_id: str, mime_type: str, name_fallback: str) -> Tuple[bytes, str, str]:
     """
     Descarga o exporta un archivo de Drive.
     Devuelve (data_bytes, download_name, download_mime).
     """
-    # Exportar si es archivo nativo de Google
-    if mime_type in GOOGLE_EXPORT_MAP:
-        export_mime = GOOGLE_EXPORT_MAP[mime_type]
+
+    # Primero obtenemos metadatos reales
+    meta = service.files().get(fileId=file_id, fields="name,mimeType").execute()
+    real_name = meta.get("name", name_fallback)
+    real_mime = meta.get("mimeType", mime_type)
+
+    # Si es archivo nativo de Google -> exportar
+    if real_mime in GOOGLE_EXPORT_MAP:
+        export_mime = GOOGLE_EXPORT_MAP[real_mime]
         request = service.files().export(fileId=file_id, mimeType=export_mime)
         buf = io.BytesIO()
         downloader = MediaIoBaseDownload(buf, request)
@@ -80,12 +84,12 @@ def download_file_bytes(
         while not done:
             _, done = downloader.next_chunk()
         data = buf.getvalue()
-        download_name = name_fallback
+        download_name = real_name
         if export_mime == "application/pdf" and not download_name.lower().endswith(".pdf"):
             download_name = f"{download_name}.pdf"
         return data, download_name, export_mime
 
-    # Descargar archivos binarios normales
+    # Si es binario normal -> get_media
     request = service.files().get_media(fileId=file_id)
     buf = io.BytesIO()
     downloader = MediaIoBaseDownload(buf, request)
@@ -94,8 +98,8 @@ def download_file_bytes(
         _, done = downloader.next_chunk()
     data = buf.getvalue()
 
-    meta = service.files().get(fileId=file_id, fields="name,mimeType").execute()
-    return data, meta.get("name", name_fallback), meta.get("mimeType", "application/octet-stream")
+    return data, real_name, real_mime
+
 
 def get_files_for_code(service, code: str) -> List[Dict]:
     if not code or not code.strip():
