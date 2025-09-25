@@ -199,8 +199,3 @@ def render_ui():
             st.error(f"Ocurrió un error: {e}")
 
 
-# ==========================
-# ENTRYPOINT
-# ==========================
-if __name__ == "__main__":
-    render_ui()
