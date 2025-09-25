@@ -718,12 +718,19 @@ elif menu == "Fichas Técnicas":
     mostrar_fichas_tecnicas()
 
 elif menu == "Crear Carpeta":
-    nuevo_codigo = obtener_ultimo_codigo()
-    if nuevo_codigo:
-        carpeta_id = crear_nueva_carpeta(nuevo_codigo)
-        if carpeta_id:
-            crear_subcarpetas(carpeta_id)
-            st.success(f"Carpeta {nuevo_codigo} creada con subcarpetas.")
+    st.subheader("Crear nueva carpeta de equipo médico")
+
+    if st.button("➕ Crear Carpeta", use_container_width=True):
+        nuevo_codigo = obtener_ultimo_codigo()
+        if nuevo_codigo:
+            carpeta_id = crear_nueva_carpeta(nuevo_codigo)
+            if carpeta_id:
+                crear_subcarpetas(carpeta_id)
+                st.success(f"✅ Carpeta {nuevo_codigo} creada con subcarpetas.")
+            else:
+                st.error("❌ No se pudo crear la carpeta principal.")
+        else:
+            st.error("⚠️ No se pudo obtener el último código.")
 
 elif menu == "Gestión Pasantes":
     st.title("👥 Gestión de Pasantes")
