@@ -14,18 +14,25 @@ from googleapiclient.errors import HttpError
 # ==========================
 # CONFIG
 # ==========================
+# ⚠️ set_page_config debe ir primero
+st.set_page_config(
+    page_title="Escanear QR – Equipos médicos",
+    page_icon="🩺",
+    layout="centered"
+)
+
 # ID de la carpeta "Equipos médicos"
 PARENT_FOLDER_ID = "1ziehslbMBQZ626dHDn5tJlOkCOVW9xYM"
 
 # Alcances de Drive
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
-# Para exportar nativos de Google a PDF (puedes cambiar formatos si quieres)
+# Exportar archivos nativos de Google
 GOOGLE_EXPORT_MAP = {
-    "application/vnd.google-apps.document": "application/pdf",     # Google Docs
-    "application/vnd.google-apps.spreadsheet": "application/pdf",  # Google Sheets
-    "application/vnd.google-apps.presentation": "application/pdf", # Google Slides
-    "application/vnd.google-apps.drawing": "application/pdf",      # Google Drawing
+    "application/vnd.google-apps.document": "application/pdf",  # Google Docs → PDF
+    "application/vnd.google-apps.spreadsheet": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # Google Sheets → XLSX
+    "application/vnd.google-apps.presentation": "application/pdf",  # Google Slides → PDF
+    "application/vnd.google-apps.drawing": "application/pdf",  # Google Drawing → PDF
 }
 
 
@@ -62,6 +69,8 @@ def find_folder_by_name(service, parent_id: str, name: str) -> Optional[str]:
         includeItemsFromAllDrives=True,
     ).execute()
     files = res.get("files", [])
+    if len(files) > 1:
+        st.warning(f"⚠️ Hay {len(files)} carpetas con el nombre {name}. Usando la primera.")
     return files[0]["id"] if files else None
 
 
@@ -86,7 +95,7 @@ def download_file_bytes(
     """
     Devuelve (data_bytes, download_name, download_mime).
 
-    - Si es Google Doc/Sheet/Slide/Drawing -> exporta a PDF (o MIME definido).
+    - Si es Google Doc/Sheet/Slide/Drawing -> exporta al formato definido.
     - Si es archivo normal -> descarga binario tal cual.
     """
     # Nativos de Google: export
@@ -100,7 +109,10 @@ def download_file_bytes(
             _, done = downloader.next_chunk()
         data = buf.getvalue()
         download_name = name_fallback
-        if export_mime == "application/pdf" and not download_name.lower().endswith(".pdf"):
+        # Agregar extensión si falta
+        if export_mime.endswith("spreadsheetml.sheet") and not download_name.lower().endswith(".xlsx"):
+            download_name = f"{download_name}.xlsx"
+        elif export_mime == "application/pdf" and not download_name.lower().endswith(".pdf"):
             download_name = f"{download_name}.pdf"
         return data, download_name, export_mime
 
@@ -137,13 +149,11 @@ def get_files_for_code(service, code: str) -> List[Dict]:
 # UI STREAMLIT
 # ==========================
 def render_ui():
-    st.set_page_config(page_title="Escanear QR – Equipos médicos", page_icon="🩺", layout="centered")
     st.title("Escaneo de QR – Equipos médicos")
     st.caption("Lee el código (p. ej. `EQU-000012`) y muestra/descarga los archivos de la carpeta correspondiente.")
 
     service = build_drive_service()
 
-    # Aquí puedes enlazar el valor real leído por tu escáner
     code = st.text_input("Código leído", placeholder="EQU-000012")
 
     colA, colB = st.columns([1, 2])
@@ -179,6 +189,11 @@ def render_ui():
 
                     with c2:
                         try:
+                            # Descarga bajo demanda al pulsar el botón
+                            def dl_bytes():
+                                data, _, _ = download_file_bytes(service, f["id"], f["mimeType"], f["name"])
+                                return data
+
                             data, dl_name, dl_mime = download_file_bytes(service, f["id"], f["mimeType"], f["name"])
                             st.download_button(
                                 "Descargar",
@@ -197,6 +212,7 @@ def render_ui():
             st.error(f"Error de Google Drive: {he}")
         except Exception as e:
             st.error(f"Ocurrió un error: {e}")
+
 
 if __name__ == "__main__":
     render_ui()
