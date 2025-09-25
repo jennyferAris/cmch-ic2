@@ -14,48 +14,30 @@ from googleapiclient.errors import HttpError
 # ==========================
 # CONFIG
 # ==========================
-# ⚠️ set_page_config debe ir primero
-st.set_page_config(
-    page_title="Escanear QR – Equipos médicos",
-    page_icon="🩺",
-    layout="centered"
-)
-
-# ID de la carpeta "Equipos médicos"
 PARENT_FOLDER_ID = "1ziehslbMBQZ626dHDn5tJlOkCOVW9xYM"
-
-# Alcances de Drive
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
-# Exportar archivos nativos de Google
 GOOGLE_EXPORT_MAP = {
-    "application/vnd.google-apps.document": "application/pdf",  # Google Docs → PDF
-    "application/vnd.google-apps.spreadsheet": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",  # Google Sheets → XLSX
-    "application/vnd.google-apps.presentation": "application/pdf",  # Google Slides → PDF
-    "application/vnd.google-apps.drawing": "application/pdf",  # Google Drawing → PDF
+    "application/vnd.google-apps.document": "application/pdf",
+    "application/vnd.google-apps.spreadsheet": "application/pdf",
+    "application/vnd.google-apps.presentation": "application/pdf",
+    "application/vnd.google-apps.drawing": "application/pdf",
 }
-
 
 # ==========================
 # AUTH / SERVICE
 # ==========================
 @st.cache_resource(show_spinner=False)
 def build_drive_service():
-    """
-    Construye el servicio de Drive usando credenciales de Service Account
-    almacenadas en st.secrets["google_service_account"].
-    """
-    info = st.secrets["google_service_account"]  # dict con la key JSON
+    info = st.secrets["google_service_account"]
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(info, SCOPES)
     service = build("drive", "v3", credentials=credentials, cache_discovery=False)
     return service
-
 
 # ==========================
 # HELPERS DRIVE
 # ==========================
 def find_folder_by_name(service, parent_id: str, name: str) -> Optional[str]:
-    """Devuelve el id de la subcarpeta con nombre EXACTO dentro de parent_id."""
     q = (
         f"'{parent_id}' in parents and "
         f"name = '{name}' and "
@@ -69,36 +51,26 @@ def find_folder_by_name(service, parent_id: str, name: str) -> Optional[str]:
         includeItemsFromAllDrives=True,
     ).execute()
     files = res.get("files", [])
-    if len(files) > 1:
-        st.warning(f"⚠️ Hay {len(files)} carpetas con el nombre {name}. Usando la primera.")
     return files[0]["id"] if files else None
 
-
 def list_files_in_folder(service, folder_id: str) -> List[Dict]:
-    """
-    Lista archivos dentro del folder:
-    id, name, mimeType, size, webViewLink, webContentLink, iconLink
-    """
     res = service.files().list(
         q=f"'{folder_id}' in parents and trashed = false",
-        fields="files(id,name,mimeType,size,webViewLink,webContentLink,iconLink)",
+        fields="files(id,name,mimeType,size,webViewLink,iconLink)",
         pageSize=1000,
         supportsAllDrives=True,
         includeItemsFromAllDrives=True,
     ).execute()
     return res.get("files", [])
 
-
 def download_file_bytes(
     service, file_id: str, mime_type: str, name_fallback: str
 ) -> Tuple[bytes, str, str]:
     """
+    Descarga o exporta un archivo de Drive.
     Devuelve (data_bytes, download_name, download_mime).
-
-    - Si es Google Doc/Sheet/Slide/Drawing -> exporta al formato definido.
-    - Si es archivo normal -> descarga binario tal cual.
     """
-    # Nativos de Google: export
+    # Exportar si es archivo nativo de Google
     if mime_type in GOOGLE_EXPORT_MAP:
         export_mime = GOOGLE_EXPORT_MAP[mime_type]
         request = service.files().export(fileId=file_id, mimeType=export_mime)
@@ -109,14 +81,11 @@ def download_file_bytes(
             _, done = downloader.next_chunk()
         data = buf.getvalue()
         download_name = name_fallback
-        # Agregar extensión si falta
-        if export_mime.endswith("spreadsheetml.sheet") and not download_name.lower().endswith(".xlsx"):
-            download_name = f"{download_name}.xlsx"
-        elif export_mime == "application/pdf" and not download_name.lower().endswith(".pdf"):
+        if export_mime == "application/pdf" and not download_name.lower().endswith(".pdf"):
             download_name = f"{download_name}.pdf"
         return data, download_name, export_mime
 
-    # Binarios normales: get_media
+    # Descargar archivos binarios normales
     request = service.files().get_media(fileId=file_id)
     buf = io.BytesIO()
     downloader = MediaIoBaseDownload(buf, request)
@@ -125,30 +94,23 @@ def download_file_bytes(
         _, done = downloader.next_chunk()
     data = buf.getvalue()
 
-    # Nombre/MIME reales
     meta = service.files().get(fileId=file_id, fields="name,mimeType").execute()
     return data, meta.get("name", name_fallback), meta.get("mimeType", "application/octet-stream")
 
-
 def get_files_for_code(service, code: str) -> List[Dict]:
-    """
-    Dado un código tipo 'EQU-000012', busca la subcarpeta con ese nombre dentro
-    de 'Equipos médicos' y devuelve sus archivos.
-    """
     if not code or not code.strip():
         raise ValueError("Código vacío.")
     code = code.strip()
-
     folder_id = find_folder_by_name(service, PARENT_FOLDER_ID, code)
     if not folder_id:
         raise ValueError(f"No se encontró la carpeta '{code}' dentro de Equipos médicos.")
     return list_files_in_folder(service, folder_id)
 
-
 # ==========================
 # UI STREAMLIT
 # ==========================
 def render_ui():
+    st.set_page_config(page_title="Escanear QR – Equipos médicos", page_icon="🩺", layout="centered")
     st.title("Escaneo de QR – Equipos médicos")
     st.caption("Lee el código (p. ej. `EQU-000012`) y muestra/descarga los archivos de la carpeta correspondiente.")
 
@@ -156,13 +118,7 @@ def render_ui():
 
     code = st.text_input("Código leído", placeholder="EQU-000012")
 
-    colA, colB = st.columns([1, 2])
-    with colA:
-        buscar = st.button("Buscar archivos", use_container_width=True)
-    with colB:
-        st.write("")
-
-    if buscar and code:
+    if st.button("Buscar archivos", use_container_width=True) and code:
         try:
             with st.spinner("Buscando carpeta y listando archivos..."):
                 files = get_files_for_code(service, code)
@@ -184,16 +140,9 @@ def render_ui():
                     with c1:
                         if f.get("webViewLink"):
                             st.link_button("Ver en Drive", f["webViewLink"], use_container_width=True)
-                        else:
-                            st.write(" ")
 
                     with c2:
                         try:
-                            # Descarga bajo demanda al pulsar el botón
-                            def dl_bytes():
-                                data, _, _ = download_file_bytes(service, f["id"], f["mimeType"], f["name"])
-                                return data
-
                             data, dl_name, dl_mime = download_file_bytes(service, f["id"], f["mimeType"], f["name"])
                             st.download_button(
                                 "Descargar",
@@ -204,6 +153,7 @@ def render_ui():
                             )
                         except HttpError as he:
                             st.error(f"No se pudo descargar: {he}")
+
                 st.divider()
 
         except ValueError as ve:
@@ -212,7 +162,6 @@ def render_ui():
             st.error(f"Error de Google Drive: {he}")
         except Exception as e:
             st.error(f"Ocurrió un error: {e}")
-
 
 if __name__ == "__main__":
     render_ui()
