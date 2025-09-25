@@ -14,30 +14,38 @@ from googleapiclient.errors import HttpError
 # ==========================
 # CONFIG
 # ==========================
+# ID de la carpeta "Equipos médicos"
 PARENT_FOLDER_ID = "1ziehslbMBQZ626dHDn5tJlOkCOVW9xYM"
+
+# Alcances de Drive
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
+# Para exportar nativos de Google a PDF (puedes cambiar formatos si quieres)
 GOOGLE_EXPORT_MAP = {
-    "application/vnd.google-apps.document": "application/pdf",
-    "application/vnd.google-apps.spreadsheet": "application/pdf",
-    "application/vnd.google-apps.presentation": "application/pdf",
-    "application/vnd.google-apps.drawing": "application/pdf",
+    "application/vnd.google-apps.document": "application/pdf",     # Google Docs
+    "application/vnd.google-apps.spreadsheet": "application/pdf",  # Google Sheets
+    "application/vnd.google-apps.presentation": "application/pdf", # Google Slides
+    "application/vnd.google-apps.drawing": "application/pdf",      # Google Drawing
 }
+
 
 # ==========================
 # AUTH / SERVICE
 # ==========================
 @st.cache_resource(show_spinner=False)
 def build_drive_service():
-    info = st.secrets["google_service_account"]
+    """Construye el servicio de Drive usando credenciales de Service Account almacenadas en st.secrets."""
+    info = st.secrets["google_service_account"]  # dict con la key JSON
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(info, SCOPES)
     service = build("drive", "v3", credentials=credentials, cache_discovery=False)
     return service
+
 
 # ==========================
 # HELPERS DRIVE
 # ==========================
 def find_folder_by_name(service, parent_id: str, name: str) -> Optional[str]:
+    """Devuelve el id de la subcarpeta con nombre EXACTO dentro de parent_id."""
     q = (
         f"'{parent_id}' in parents and "
         f"name = '{name}' and "
@@ -53,77 +61,65 @@ def find_folder_by_name(service, parent_id: str, name: str) -> Optional[str]:
     files = res.get("files", [])
     return files[0]["id"] if files else None
 
+
 def list_files_in_folder(service, folder_id: str) -> List[Dict]:
+    """Lista archivos dentro del folder."""
     res = service.files().list(
         q=f"'{folder_id}' in parents and trashed = false",
-        fields="files(id,name,mimeType,size,webViewLink,iconLink)",
+        fields="files(id,name,mimeType,size,webViewLink,webContentLink,iconLink)",
         pageSize=1000,
         supportsAllDrives=True,
         includeItemsFromAllDrives=True,
     ).execute()
     return res.get("files", [])
 
+
 def download_file_bytes(service, file_id: str, mime_type: str, name_fallback: str) -> Tuple[bytes, str, str]:
     """
-    Descarga un archivo de Drive. 
-    Si es nativo de Google (Docs/Sheets/Slides) -> exporta.
-    Si es binario -> descarga normal.
+    Devuelve (data_bytes, download_name, download_mime).
+    - Si es Google Doc/Sheet/Slide/Drawing -> exporta a PDF.
+    - Si es archivo normal -> descarga binario.
     """
-
-    # 🔹 Consultar siempre el MIME real
-    meta = service.files().get(fileId=file_id, fields="name,mimeType").execute()
-    real_name = meta.get("name", name_fallback)
-    real_mime = meta.get("mimeType", mime_type or "application/octet-stream")
-
-    try:
-        # 🔹 Si es archivo nativo de Google, usar export
-        if real_mime in GOOGLE_EXPORT_MAP:
-            export_mime = GOOGLE_EXPORT_MAP[real_mime]
-            request = service.files().export(fileId=file_id, mimeType=export_mime)
-        else:
-            # 🔹 Si no, intentar descarga normal
-            request = service.files().get_media(fileId=file_id)
-
+    # Nativos de Google: export
+    if mime_type in GOOGLE_EXPORT_MAP:
+        export_mime = GOOGLE_EXPORT_MAP[mime_type]
+        request = service.files().export(fileId=file_id, mimeType=export_mime)
         buf = io.BytesIO()
         downloader = MediaIoBaseDownload(buf, request)
         done = False
         while not done:
             _, done = downloader.next_chunk()
         data = buf.getvalue()
+        download_name = name_fallback
+        if export_mime == "application/pdf" and not download_name.lower().endswith(".pdf"):
+            download_name = f"{download_name}.pdf"
+        return data, download_name, export_mime
 
-        # Ajustar nombre si se exportó
-        download_name = real_name
-        if real_mime in GOOGLE_EXPORT_MAP and GOOGLE_EXPORT_MAP[real_mime] == "application/pdf":
-            if not download_name.lower().endswith(".pdf"):
-                download_name += ".pdf"
+    # Binarios normales: get_media
+    request = service.files().get_media(fileId=file_id)
+    buf = io.BytesIO()
+    downloader = MediaIoBaseDownload(buf, request)
+    done = False
+    while not done:
+        _, done = downloader.next_chunk()
+    data = buf.getvalue()
 
-        return data, download_name, GOOGLE_EXPORT_MAP.get(real_mime, real_mime)
-
-    except HttpError as he:
-        # 🔹 Fallback: si dio 403 (archivo Google tratado como binario), forzar export
-        if "fileNotDownloadable" in str(he) and real_mime in GOOGLE_EXPORT_MAP:
-            export_mime = GOOGLE_EXPORT_MAP[real_mime]
-            request = service.files().export(fileId=file_id, mimeType=export_mime)
-            buf = io.BytesIO()
-            downloader = MediaIoBaseDownload(buf, request)
-            done = False
-            while not done:
-                _, done = downloader.next_chunk()
-            data = buf.getvalue()
-            download_name = real_name + ".pdf"
-            return data, download_name, export_mime
-        else:
-            raise
+    # Nombre/MIME reales
+    meta = service.files().get(fileId=file_id, fields="name,mimeType").execute()
+    return data, meta.get("name", name_fallback), meta.get("mimeType", "application/octet-stream")
 
 
 def get_files_for_code(service, code: str) -> List[Dict]:
+    """Busca la subcarpeta con ese código y devuelve sus archivos."""
     if not code or not code.strip():
         raise ValueError("Código vacío.")
     code = code.strip()
+
     folder_id = find_folder_by_name(service, PARENT_FOLDER_ID, code)
     if not folder_id:
         raise ValueError(f"No se encontró la carpeta '{code}' dentro de Equipos médicos.")
     return list_files_in_folder(service, folder_id)
+
 
 # ==========================
 # UI STREAMLIT
@@ -137,7 +133,13 @@ def render_ui():
 
     code = st.text_input("Código leído", placeholder="EQU-000012")
 
-    if st.button("Buscar archivos", use_container_width=True) and code:
+    colA, colB = st.columns([1, 2])
+    with colA:
+        buscar = st.button("Buscar archivos", use_container_width=True)
+    with colB:
+        st.write("")
+
+    if buscar and code:
         try:
             with st.spinner("Buscando carpeta y listando archivos..."):
                 files = get_files_for_code(service, code)
@@ -159,20 +161,27 @@ def render_ui():
                     with c1:
                         if f.get("webViewLink"):
                             st.link_button("Ver en Drive", f["webViewLink"], use_container_width=True)
+                        else:
+                            st.write(" ")
 
                     with c2:
-                        try:
-                            data, dl_name, dl_mime = download_file_bytes(service, f["id"], f["mimeType"], f["name"])
-                            st.download_button(
-                                "Descargar",
-                                data=data,
-                                file_name=dl_name,
-                                mime=dl_mime,
-                                use_container_width=True,
-                            )
-                        except HttpError as he:
-                            st.error(f"No se pudo descargar: {he}")
-
+                        # Solo mostrar botón de descarga si NO es una carpeta
+                        if f["mimeType"] != "application/vnd.google-apps.folder":
+                            try:
+                                data, dl_name, dl_mime = download_file_bytes(
+                                    service, f["id"], f["mimeType"], f["name"]
+                                )
+                                st.download_button(
+                                    "Descargar",
+                                    data=data,
+                                    file_name=dl_name,
+                                    mime=dl_mime,
+                                    use_container_width=True,
+                                )
+                            except HttpError as he:
+                                st.error(f"No se pudo descargar: {he}")
+                        else:
+                            st.caption("📂 Es una carpeta, no descargable")
                 st.divider()
 
         except ValueError as ve:
@@ -181,6 +190,7 @@ def render_ui():
             st.error(f"Error de Google Drive: {he}")
         except Exception as e:
             st.error(f"Ocurrió un error: {e}")
+
 
 if __name__ == "__main__":
     render_ui()
