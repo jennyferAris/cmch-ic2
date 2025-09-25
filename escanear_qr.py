@@ -125,7 +125,7 @@ def get_files_for_code(service, code: str) -> List[Dict]:
 # UI STREAMLIT
 # ==========================
 def render_ui():
-    st.set_page_config(page_title="Escanear QR – Equipos médicos", page_icon="🩺", layout="centered")
+    st.set_page_config(page_title="Escanear QR – Equipos médicos", page_icon="./static/ICON.ico", layout="centered")
     st.title("Escaneo de QR – Equipos médicos")
     st.caption("Lee el código (p. ej. `EQU-000012`) y muestra/descarga los archivos de la carpeta correspondiente.")
 
