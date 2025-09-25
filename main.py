@@ -3,7 +3,8 @@ from streamlit_option_menu import option_menu
 from base_datos import mostrar_base_datos
 from generar_qr import generar_qrs
 import json
-from escanear_qr import mostrar_escaner_qr
+#from escanear_qr import mostrar_escaner_qr
+from escanear_qr import render_ui
 from informes_tecnicos import mostrar_informes_tecnicos 
 from asignacion_tareas import mostrar_modulo_asignacion 
 from gestion_usuarios import mostrar_modulo_gestion_usuarios
@@ -667,13 +668,12 @@ elif menu == "Inventario":
     st.info("📋 Módulo en desarrollo - Gestión de inventario de equipos médicos")
 
 elif menu == "Escáner QR" and rol_nivel in [4, 5, 6]:
-    # Pasar información del rol al escáner
     if 'rol_nivel' not in st.session_state:
         st.session_state.rol_nivel = rol_nivel
     if 'rol_nombre' not in st.session_state:
         st.session_state.rol_nombre = rol_nombre
     
-    mostrar_escaner_qr()
+    render_ui()
 
 elif menu == "Reportar Evento" and rol_nivel == 6:
     st.title("📝 Reportar Evento")
