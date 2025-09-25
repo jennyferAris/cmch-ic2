@@ -65,40 +65,55 @@ def list_files_in_folder(service, folder_id: str) -> List[Dict]:
 
 def download_file_bytes(service, file_id: str, mime_type: str, name_fallback: str) -> Tuple[bytes, str, str]:
     """
-    Descarga o exporta un archivo de Drive.
-    Devuelve (data_bytes, download_name, download_mime).
+    Descarga un archivo de Drive. 
+    Si es nativo de Google (Docs/Sheets/Slides) -> exporta.
+    Si es binario -> descarga normal.
     """
 
-    # Primero obtenemos metadatos reales
+    # 🔹 Consultar siempre el MIME real
     meta = service.files().get(fileId=file_id, fields="name,mimeType").execute()
     real_name = meta.get("name", name_fallback)
-    real_mime = meta.get("mimeType", mime_type)
+    real_mime = meta.get("mimeType", mime_type or "application/octet-stream")
 
-    # Si es archivo nativo de Google -> exportar
-    if real_mime in GOOGLE_EXPORT_MAP:
-        export_mime = GOOGLE_EXPORT_MAP[real_mime]
-        request = service.files().export(fileId=file_id, mimeType=export_mime)
+    try:
+        # 🔹 Si es archivo nativo de Google, usar export
+        if real_mime in GOOGLE_EXPORT_MAP:
+            export_mime = GOOGLE_EXPORT_MAP[real_mime]
+            request = service.files().export(fileId=file_id, mimeType=export_mime)
+        else:
+            # 🔹 Si no, intentar descarga normal
+            request = service.files().get_media(fileId=file_id)
+
         buf = io.BytesIO()
         downloader = MediaIoBaseDownload(buf, request)
         done = False
         while not done:
             _, done = downloader.next_chunk()
         data = buf.getvalue()
+
+        # Ajustar nombre si se exportó
         download_name = real_name
-        if export_mime == "application/pdf" and not download_name.lower().endswith(".pdf"):
-            download_name = f"{download_name}.pdf"
-        return data, download_name, export_mime
+        if real_mime in GOOGLE_EXPORT_MAP and GOOGLE_EXPORT_MAP[real_mime] == "application/pdf":
+            if not download_name.lower().endswith(".pdf"):
+                download_name += ".pdf"
 
-    # Si es binario normal -> get_media
-    request = service.files().get_media(fileId=file_id)
-    buf = io.BytesIO()
-    downloader = MediaIoBaseDownload(buf, request)
-    done = False
-    while not done:
-        _, done = downloader.next_chunk()
-    data = buf.getvalue()
+        return data, download_name, GOOGLE_EXPORT_MAP.get(real_mime, real_mime)
 
-    return data, real_name, real_mime
+    except HttpError as he:
+        # 🔹 Fallback: si dio 403 (archivo Google tratado como binario), forzar export
+        if "fileNotDownloadable" in str(he) and real_mime in GOOGLE_EXPORT_MAP:
+            export_mime = GOOGLE_EXPORT_MAP[real_mime]
+            request = service.files().export(fileId=file_id, mimeType=export_mime)
+            buf = io.BytesIO()
+            downloader = MediaIoBaseDownload(buf, request)
+            done = False
+            while not done:
+                _, done = downloader.next_chunk()
+            data = buf.getvalue()
+            download_name = real_name + ".pdf"
+            return data, download_name, export_mime
+        else:
+            raise
 
 
 def get_files_for_code(service, code: str) -> List[Dict]:
