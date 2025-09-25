@@ -717,7 +717,7 @@ elif menu == "Fichas Técnicas":
         st.session_state.email = email
     mostrar_fichas_tecnicas()
 
-elif menu == "Crear carpeta":
+elif menu == "Crear Carpeta":
     nuevo_codigo = obtener_ultimo_codigo()
     if nuevo_codigo:
         carpeta_id = crear_nueva_carpeta(nuevo_codigo)
